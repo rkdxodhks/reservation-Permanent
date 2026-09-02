@@ -1,7 +1,6 @@
 import React from "react";
 import { toast } from "react-toastify";
 
-// Minimal User Slot Dot Component
 const SlotUserDot = ({ isMine, isFilled }) => {
   let bgClass = "bg-slate-200";
   if (isFilled) {
@@ -11,7 +10,7 @@ const SlotUserDot = ({ isMine, isFilled }) => {
   return (
     <span
       className={`d-inline-block rounded-circle ${bgClass}`}
-      style={{ width: "8px", height: "8px", transition: "all 0.15s ease" }}
+      style={{ width: "10px", height: "10px", transition: "all 0.15s ease" }}
     />
   );
 };
@@ -23,7 +22,7 @@ const Timetable = ({
   reservations = [],
   currentReservationCount = 0,
   maxReservationsPerStudent = 2,
-  maxCapacityPerSlot = 2,
+  maxCapacityPerSlot = 1,
   timeSlots = [],
   slotBlocks = [],
   onCardClick,
@@ -86,25 +85,28 @@ const Timetable = ({
 
   return (
     <div className="timetable-wrapper">
-      {/* Header */}
-      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 pb-3 border-bottom">
+      {/* Header section with Item 4: Enlarged main date display */}
+      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 pb-3 border-bottom gap-2">
         <div>
           <h4 className="fw-semibold mb-1 text-slate-900">
             {selectedLab} <span className="text-slate-500 fs-6 fw-normal">예약 시간표</span>
           </h4>
           <p className="text-slate-500 small mb-0">
-            시간대 카드를 선택하면 예약 신청이 진행됩니다.
+            시간대 카드를 선택하면 예약 신청이 진행됩니다. (슬롯당 1인 제한)
           </p>
         </div>
-        <div className="mt-2 mt-sm-0">
-          <span className="pill-date-tag">
-            {selectedDate || "날짜"}
-          </span>
+        
+        {/* Item 4: Enlarged prominent date pill */}
+        <div className="mt-1 mt-sm-0">
+          <div className="prominent-date-badge">
+            <span className="text-slate-500 text-xs font-mono me-1">DATE</span>
+            <span className="fw-bold fs-5 text-slate-900">{selectedDate || "날짜 미선택"}</span>
+          </div>
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="row row-cols-2 row-cols-sm-3 row-cols-lg-4 g-3">
+      {/* Timetable Slot Grid */}
+      <div className="row row-cols-2 row-cols-sm-3 row-cols-lg-3 g-3">
         {timeSlots.map((timeSlot) => {
           const reservationsForSlot = reservations.filter(
             (r) => r.time_slot === timeSlot

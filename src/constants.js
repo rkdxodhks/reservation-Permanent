@@ -1,8 +1,8 @@
 export const DEFAULT_SETTINGS = {
-  event_title: "연구실 체험부스 실시간 예약 시스템",
+  event_title: "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템",
   event_dates: ["2026-09-10", "2026-09-11"],
   max_reservations_per_student: 2,
-  max_capacity_per_slot: 2,
+  max_capacity_per_slot: 1, // 체험부스 슬롯당 1명으로 변경
   start_time: "10:00",
   end_time: "16:00",
   slot_interval: 20,
@@ -54,13 +54,6 @@ export const DEFAULT_BOOTHS = [
   },
 ];
 
-/**
- * 동적 타임슬롯 생성 헬퍼 함수
- * @param {string} startTime 시작 시간 (예: "10:00")
- * @param {string} endTime 종료 시간 (예: "16:00")
- * @param {number} intervalMinutes 시간 간격 (분 단위, 예: 20)
- * @returns {Array<string>} 생성된 타임슬롯 스트링 배열
- */
 export const generateTimeSlots = (
   startTime = "10:00",
   endTime = "16:00",
@@ -77,19 +70,14 @@ export const generateTimeSlots = (
     while (currentMinutes < endMinutesTotal) {
       const hour = Math.floor(currentMinutes / 60);
       const minute = currentMinutes % 60;
-
-      // 12:00 ~ 13:40 (점심시간 예외 처리 옵션 - 12:00 ~ 13:00 구간 제외 가능)
-      // 표준 24시간 표기
       const timeStr = `${hour.toString().padStart(2, "0")}:${minute
         .toString()
         .padStart(2, "0")}`;
-      
       slots.push(timeStr);
       currentMinutes += Number(intervalMinutes);
     }
   } catch (err) {
     console.error("Error generating time slots:", err);
-    // 기본 슬롯 롤백
     return [
       "10:00", "10:20", "10:40", "11:00", "11:20", "11:40",
       "14:00", "14:20", "14:40", "15:00", "15:20", "15:40"
@@ -105,4 +93,4 @@ export const generateTimeSlots = (
 };
 
 export const LABS = DEFAULT_BOOTHS.map((b) => b.name);
-export const MAX_RESERVATIONS_PER_SLOT = 2;
+export const MAX_RESERVATIONS_PER_SLOT = 1;

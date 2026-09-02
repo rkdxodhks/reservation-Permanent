@@ -1,4 +1,4 @@
-// Reading this as: Institutional event reservation platform for Pusan National University Pharmacy (BAF), with a clean, trust-first minimalist design language adhering to taste-skill guidelines.
+// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with clean, responsive 3-column desktop layout (Left: Student Info & Dates, Center: Main Timetable, Right: My Reservations).
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LabsList, MyReservations } from "./StatusPanel";
@@ -16,7 +16,6 @@ import { Modal, Button, Form, Spinner } from "react-bootstrap";
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// SVG Icons (Replacing emojis per taste-skill anti-emoji policy)
 const SettingsIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
@@ -41,20 +40,17 @@ const CalendarIcon = () => (
 );
 
 function App() {
-  // 1. Dynamic Config State
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [booths, setBooths] = useState(DEFAULT_BOOTHS);
   const [reservations, setReservations] = useState([]);
   const [slotBlocks, setSlotBlocks] = useState([]);
 
-  // 2. User & Selection State
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
   const [authNumber, setAuthNumber] = useState("");
   const [selectedLab, setSelectedLab] = useState(DEFAULT_BOOTHS[0].name);
   const [selectedDate, setSelectedDate] = useState(DEFAULT_SETTINGS.event_dates[0]);
 
-  // 3. UI & Admin Modal State
   const [loading, setLoading] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -65,7 +61,6 @@ function App() {
   const channelsRef = useRef([]);
   const publicUrl = process.env.PUBLIC_URL || "";
 
-  // Fetch Settings from Supabase
   const fetchSettings = useCallback(async () => {
     try {
       const { data, error } = await supabase.from("app_settings").select("*").eq("id", 1).single();
@@ -82,7 +77,6 @@ function App() {
     }
   }, [selectedDate]);
 
-  // Fetch Booths from Supabase
   const fetchBooths = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -100,7 +94,6 @@ function App() {
     }
   }, [selectedLab]);
 
-  // Fetch Reservations & Blocks from Supabase
   const fetchReservationsAndBlocks = useCallback(async () => {
     try {
       const { data: resData, error: resErr } = await supabase.from("reservations").select("*");
@@ -117,14 +110,12 @@ function App() {
     }
   }, []);
 
-  // Refresh all
   const handleRefreshAll = useCallback(() => {
     fetchSettings();
     fetchBooths();
     fetchReservationsAndBlocks();
   }, [fetchSettings, fetchBooths, fetchReservationsAndBlocks]);
 
-  // Initial Load & Realtime Subscriptions
   useEffect(() => {
     handleRefreshAll();
 
@@ -155,7 +146,6 @@ function App() {
     };
   }, [handleRefreshAll, fetchSettings, fetchBooths, fetchReservationsAndBlocks]);
 
-  // Keyboard shortcut Ctrl+Shift+A for Admin Modal
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
@@ -167,7 +157,6 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Update current user's reservation count
   useEffect(() => {
     if (!studentId) {
       setCurrentReservationCount(0);
@@ -177,14 +166,12 @@ function App() {
     setCurrentReservationCount(count);
   }, [studentId, reservations]);
 
-  // Dynamic time slots array
   const timeSlots = generateTimeSlots(
     settings.start_time || "10:00",
     settings.end_time || "16:00",
     settings.slot_interval || 20
   );
 
-  // Time slot click
   const handleTimeSlotClick = (timeSlot, reservationsForSlot) => {
     if (!studentId || !studentName || !authNumber) {
       toast.info("예약을 진행하려면 학번, 성함, 비밀번호를 먼저 입력해 주세요.");
@@ -207,7 +194,6 @@ function App() {
     setShowReservationModal(true);
   };
 
-  // My Reservation click cancellation
   const handleMyReservationClick = (reservation) => {
     setModalContext({
       type: "cancel",
@@ -219,7 +205,6 @@ function App() {
     setShowReservationModal(true);
   };
 
-  // Confirm create reservation
   const handleConfirmReservation = async () => {
     if (!modalContext) return;
     setLoading(true);
@@ -240,7 +225,8 @@ function App() {
           r.time_slot === modalContext.timeSlot
       ).length;
 
-      if (slotResCount >= (settings.max_capacity_per_slot || 2)) {
+      const slotCapacityLimit = settings.max_capacity_per_slot || 1; // Item 8: 1 per slot default
+      if (slotResCount >= slotCapacityLimit) {
         toast.error("해당 시간대는 이미 정원이 마감되었습니다.");
         setLoading(false);
         setShowReservationModal(false);
@@ -270,7 +256,6 @@ function App() {
     }
   };
 
-  // Confirm cancel reservation
   const handleConfirmCancel = async () => {
     if (!modalContext || !modalContext.reservationId) return;
     setLoading(true);
@@ -301,7 +286,6 @@ function App() {
       {/* HEADER BAR */}
       <header className="taste-header sticky-top border-bottom">
         <div className="container-fluid max-w-7xl px-3 py-3 d-flex justify-content-between align-items-center">
-          
           <div className="d-flex align-items-center gap-3">
             <div className="brand-logo-group d-flex align-items-center gap-2">
               <img
@@ -319,15 +303,17 @@ function App() {
 
             <div>
               <div className="d-flex align-items-center gap-2">
+                {/* Item 7: PNU BioMaterial Science */}
                 <span className="pill-tag font-mono">
-                  PNU PHARMACY
+                  PNU BioMaterial Science
                 </span>
+                {/* Item 1: 부산대 바이오소재과학과 명칭 변경 */}
                 <h1 className="h6 fw-semibold mb-0 text-slate-900 brand-title">
-                  {settings.event_title || "부산대학교 약학대학 BAF 체험부스 예약 시스템"}
+                  {settings.event_title || "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템"}
                 </h1>
               </div>
               <small className="text-slate-500 d-none d-md-inline text-xs">
-                실시간 동기화 예약 플랫폼
+                부산대학교 바이오소재과학과 연구실 체험부스 실시간 예약 플랫폼
               </small>
             </div>
           </div>
@@ -344,14 +330,14 @@ function App() {
         </div>
       </header>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN CONTENT: 3-COLUMN DESKTOP LAYOUT (Item 3) */}
       <main className="container-fluid max-w-7xl py-4 flex-grow-1">
         <div className="row g-4">
           
-          {/* LEFT COLUMN */}
-          <div className="col-12 col-lg-4 col-xl-3">
+          {/* LEFT COLUMN (col-12 col-lg-3): Student Form & Date Selector */}
+          <div className="col-12 col-lg-3">
             
-            {/* Student Form Card */}
+            {/* Student Info Card */}
             <div className="taste-card p-4 mb-3">
               <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                 <h6 className="fw-semibold mb-0 text-slate-900 d-flex align-items-center gap-2">
@@ -363,10 +349,11 @@ function App() {
 
               <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label className="form-label-taste">학번 (9자리)</Form.Label>
+                  <Form.Label className="form-label-taste">학번</Form.Label>
+                  {/* Item 5: 학번 예시 202345603 */}
                   <Form.Control
                     type="text"
-                    placeholder="예: 202612345"
+                    placeholder="예: 202345603"
                     value={studentId}
                     onChange={(e) => setStudentId(e.target.value.trim())}
                     maxLength={15}
@@ -398,20 +385,20 @@ function App() {
               </Form>
             </div>
 
-            {/* Date Selector */}
+            {/* Date Selector Card */}
             <div className="taste-card p-4 mb-3">
               <h6 className="fw-semibold mb-3 text-slate-900 d-flex align-items-center gap-2">
                 <CalendarIcon />
                 <span>행사 날짜</span>
               </h6>
-              <div className="d-flex flex-wrap gap-2">
+              <div className="d-flex flex-column gap-2">
                 {settings.event_dates?.map((dateStr) => {
                   const isSelected = selectedDate === dateStr;
                   return (
                     <button
                       key={dateStr}
                       type="button"
-                      className={`btn date-pill-btn flex-grow-1 py-2 ${
+                      className={`btn date-pill-btn w-100 py-2.5 ${
                         isSelected ? "active" : ""
                       }`}
                       onClick={() => setSelectedDate(dateStr)}
@@ -423,7 +410,7 @@ function App() {
               </div>
             </div>
 
-            {/* Booth List (Desktop) */}
+            {/* Booth List Selector (Desktop) */}
             <div className="taste-card p-4 mb-3 d-none d-lg-block">
               <LabsList
                 booths={booths}
@@ -431,19 +418,10 @@ function App() {
                 onLabSelect={(labName) => setSelectedLab(labName)}
               />
             </div>
-
-            {/* My Reservations */}
-            <MyReservations
-              studentId={studentId}
-              reservationsByDate={{ [selectedDate]: reservations }}
-              currentReservationCount={currentReservationCount}
-              maxReservationsPerStudent={settings.max_reservations_per_student || 2}
-              onReservationClick={handleMyReservationClick}
-            />
           </div>
 
-          {/* RIGHT COLUMN: TIMETABLE */}
-          <div className="col-12 col-lg-8 col-xl-9">
+          {/* CENTER MAIN COLUMN (col-12 col-lg-6): Timetable Grid */}
+          <div className="col-12 col-lg-6">
             
             {/* Booth Pills for Mobile */}
             <div className="taste-card p-3 mb-3 d-lg-none">
@@ -465,7 +443,7 @@ function App() {
                 )}
                 currentReservationCount={currentReservationCount}
                 maxReservationsPerStudent={settings.max_reservations_per_student || 2}
-                maxCapacityPerSlot={settings.max_capacity_per_slot || 2}
+                maxCapacityPerSlot={settings.max_capacity_per_slot || 1} // Item 8: 1 slot limit
                 timeSlots={timeSlots}
                 slotBlocks={slotBlocks}
                 onCardClick={handleTimeSlotClick}
@@ -473,6 +451,18 @@ function App() {
               />
             </div>
           </div>
+
+          {/* RIGHT COLUMN (col-12 col-lg-3): Item 3 - Dedicated My Reservations Panel */}
+          <div className="col-12 col-lg-3">
+            <MyReservations
+              studentId={studentId}
+              reservationsByDate={{ [selectedDate]: reservations }}
+              currentReservationCount={currentReservationCount}
+              maxReservationsPerStudent={settings.max_reservations_per_student || 2}
+              onReservationClick={handleMyReservationClick}
+            />
+          </div>
+
         </div>
       </main>
 
@@ -490,10 +480,11 @@ function App() {
               alt="BAF"
               style={{ height: "20px" }}
             />
-            <span className="fw-medium text-slate-700 text-sm">부산대학교 약학대학 BAF</span>
+            {/* Item 1: 부산대학교 바이오소재과학과 BAF */}
+            <span className="fw-medium text-slate-700 text-sm">부산대학교 바이오소재과학과 BAF</span>
           </div>
           <p className="mb-0 text-slate-500 small">
-            {settings.event_title || "부산대학교 약학대학 BAF 체험부스 실시간 예약 시스템"} © 2026 Pusan National University Pharmacy. All Rights Reserved.
+            {settings.event_title || "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템"} © 2026 Pusan National University BioMaterial Science. All Rights Reserved.
           </p>
         </div>
       </footer>

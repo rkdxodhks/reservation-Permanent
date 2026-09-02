@@ -243,11 +243,12 @@ export const AdminModal = ({
         {!isAuthenticated ? (
           <Form onSubmit={handleLogin} className="max-w-md mx-auto py-5 text-center">
             <h5 className="mb-2 fw-semibold text-slate-900">관리자 인증</h5>
-            <p className="text-slate-500 mb-4 text-sm">관리자 비밀번호를 입력해 주세요.</p>
+            <p className="text-slate-500 mb-4 text-sm">관리자 암호를 입력해 주세요.</p>
             <Form.Group className="mb-3">
+              {/* Item 2: Removed password example in placeholder */}
               <Form.Control
                 type="password"
-                placeholder="비밀번호 입력 (기본: admin1234)"
+                placeholder="관리자 암호 입력"
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 autoFocus
@@ -347,7 +348,7 @@ export const AdminModal = ({
                           type="number"
                           min="1"
                           max="20"
-                          value={formSettings.max_capacity_per_slot || 2}
+                          value={formSettings.max_capacity_per_slot || 1}
                           onChange={(e) =>
                             setFormSettings({
                               ...formSettings,
