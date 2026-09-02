@@ -1,4 +1,4 @@
-// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with clean 3-column layout (Left: Student Info & Booth List, Center: Main Timetable, Right: Event Date Selector on top of My Reservations).
+// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with master admin passcode (202345603) and strict cancellation password validation security.
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LabsList, MyReservations } from "./StatusPanel";
@@ -50,6 +50,9 @@ function App() {
   const [authNumber, setAuthNumber] = useState("");
   const [selectedLab, setSelectedLab] = useState(DEFAULT_BOOTHS[0].name);
   const [selectedDate, setSelectedDate] = useState(DEFAULT_SETTINGS.event_dates[0]);
+
+  // Cancel Verification State
+  const [cancelAuthPassword, setCancelAuthPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -169,6 +172,13 @@ function App() {
     setCurrentReservationCount(count);
   }, [studentId, reservations]);
 
+  // Pre-fill cancellation password input when modal opens
+  useEffect(() => {
+    if (showReservationModal && modalContext?.type === "cancel") {
+      setCancelAuthPassword(authNumber || "");
+    }
+  }, [showReservationModal, modalContext, authNumber]);
+
   const timeSlots = generateTimeSlots(
     settings.start_time || "10:00",
     settings.end_time || "16:00",
@@ -259,8 +269,22 @@ function App() {
     }
   };
 
+  // SECURITY ENHANCEMENT: Verification of secret password before cancellation
   const handleConfirmCancel = async () => {
     if (!modalContext || !modalContext.reservationId) return;
+
+    const targetRes = reservations.find((r) => r.id === modalContext.reservationId);
+    if (targetRes) {
+      if (!cancelAuthPassword.trim()) {
+        toast.error("취소 비밀번호를 입력해 주세요.");
+        return;
+      }
+      if (cancelAuthPassword.trim() !== targetRes.auth_number.trim()) {
+        toast.error("비밀번호가 일치하지 않아 예약을 취소할 수 없습니다.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -271,7 +295,7 @@ function App() {
 
       if (error) throw error;
 
-      toast.info("예약이 취소되었습니다.");
+      toast.info("예약이 성공적으로 취소되었습니다.");
       fetchReservationsAndBlocks();
     } catch (err) {
       console.error("Cancel reservation error:", err);
@@ -291,7 +315,6 @@ function App() {
         <div className="container-fluid max-w-7xl px-3 py-2.5 d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-3">
             <div className="brand-logo-group d-flex align-items-center gap-2">
-              {/* Item 3: Enlarged PNU Logo */}
               <img
                 src={`${publicUrl}/부산대.ico`}
                 alt="PNU"
@@ -314,7 +337,6 @@ function App() {
                   {settings.event_title || "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템"}
                 </h1>
               </div>
-              {/* Item 4: Subtitle removed per request */}
             </div>
           </div>
 
@@ -330,14 +352,12 @@ function App() {
         </div>
       </header>
 
-      {/* MAIN CONTENT: 3-COLUMN DESKTOP LAYOUT */}
+      {/* MAIN CONTENT: 3-COLUMN LAYOUT */}
       <main className="container-fluid max-w-7xl py-4 flex-grow-1">
         <div className="row g-4">
           
-          {/* LEFT COLUMN (col-12 col-lg-3): Student Form & Booth List */}
+          {/* LEFT COLUMN */}
           <div className="col-12 col-lg-3">
-            
-            {/* Student Info Card */}
             <div className="taste-card p-4 mb-3">
               <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                 <h6 className="fw-semibold mb-0 text-slate-900 d-flex align-items-center gap-2">
@@ -384,7 +404,6 @@ function App() {
               </Form>
             </div>
 
-            {/* Booth List Selector (Desktop) */}
             <div className="taste-card p-4 mb-3 d-none d-lg-block">
               <LabsList
                 booths={booths}
@@ -394,10 +413,8 @@ function App() {
             </div>
           </div>
 
-          {/* CENTER MAIN COLUMN (col-12 col-lg-6): Timetable Grid */}
+          {/* CENTER MAIN COLUMN */}
           <div className="col-12 col-lg-6">
-            
-            {/* Booth Pills for Mobile */}
             <div className="taste-card p-3 mb-3 d-lg-none">
               <LabsList
                 booths={booths}
@@ -406,7 +423,6 @@ function App() {
               />
             </div>
 
-            {/* Main Timetable */}
             <div className="taste-card p-3 p-md-4">
               <Timetable
                 studentId={studentId}
@@ -426,9 +442,8 @@ function App() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN (col-12 col-lg-3): Item 1 - Date Selector ON TOP of My Reservations */}
+          {/* RIGHT COLUMN: Date Selector on top of My Reservations */}
           <div className="col-12 col-lg-3">
-            {/* Date Selector Card */}
             <div className="taste-card p-4 mb-3">
               <h6 className="fw-semibold mb-3 text-slate-900 d-flex align-items-center gap-2">
                 <CalendarIcon />
@@ -453,7 +468,6 @@ function App() {
               </div>
             </div>
 
-            {/* My Reservations Card */}
             <MyReservations
               studentId={studentId}
               reservationsByDate={{ [selectedDate]: reservations }}
@@ -514,7 +528,7 @@ function App() {
         </Modal.Body>
       </Modal>
 
-      {/* RESERVATION CONFIRM / CANCEL MODAL */}
+      {/* RESERVATION CONFIRM / CANCEL MODAL WITH PASSWORD VERIFICATION */}
       <Modal
         show={showReservationModal}
         onHide={() => setShowReservationModal(false)}
@@ -523,7 +537,7 @@ function App() {
       >
         <Modal.Header closeButton className="border-bottom-0">
           <Modal.Title className="h6 fw-semibold text-slate-900">
-            {modalContext?.type === "cancel" ? "예약 취소" : "예약 신청"}
+            {modalContext?.type === "cancel" ? "예약 취소 확인" : "예약 신청 확인"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="py-3">
@@ -545,7 +559,20 @@ function App() {
                 <p className="mb-1 text-slate-700"><strong>날짜:</strong> {modalContext?.date}</p>
                 <p className="mb-0 text-slate-700"><strong>시간:</strong> {modalContext?.timeSlot}</p>
               </div>
-              <p className="small text-rose-600 mb-0">취소 후 다시 해당 슬롯을 예약해야 합니다.</p>
+              
+              {/* Security password input verification */}
+              <Form.Group className="mt-3 text-start">
+                <Form.Label className="form-label-taste text-slate-900 fw-semibold">
+                  취소 비밀번호 검증
+                </Form.Label>
+                <Form.Control
+                  type="password"
+                  placeholder="예약 신청 시 설정한 비밀번호 입력"
+                  value={cancelAuthPassword}
+                  onChange={(e) => setCancelAuthPassword(e.target.value)}
+                  className="form-control-taste"
+                />
+              </Form.Group>
             </div>
           )}
         </Modal.Body>
@@ -559,7 +586,7 @@ function App() {
             </Button>
           ) : (
             <Button variant="danger" className="btn-taste-danger" onClick={handleConfirmCancel} disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : "취소 실행"}
+              {loading ? <Spinner animation="border" size="sm" /> : "취소 검증 및 실행"}
             </Button>
           )}
         </Modal.Footer>

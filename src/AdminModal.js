@@ -31,6 +31,9 @@ export const AdminModal = ({
   const [selectedBlockBooth, setSelectedBlockBooth] = useState(booths[0]?.name || "");
   const [selectedBlockDate, setSelectedBlockDate] = useState(settings?.event_dates?.[0] || "");
 
+  // Permanent Master Admin Passcode
+  const MASTER_ADMIN_PASSCODE = "202345603";
+
   useEffect(() => {
     setFormSettings(settings);
   }, [settings]);
@@ -50,12 +53,13 @@ export const AdminModal = ({
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const correctCode = settings?.admin_passcode || "admin1234";
-    if (passcode === correctCode) {
+    const configurableCode = settings?.admin_passcode || "admin1234";
+    // Check both Master Code (202345603) and Configured Code
+    if (passcode === MASTER_ADMIN_PASSCODE || passcode === configurableCode) {
       setIsAuthenticated(true);
-      toast.success("관리자 모드로 접속되었습니다.");
+      toast.success("관리자 포털에 접속되었습니다.");
     } else {
-      toast.error("비밀번호가 일치하지 않습니다.");
+      toast.error("관리자 비밀번호가 일치하지 않습니다.");
     }
   };
 
@@ -70,7 +74,7 @@ export const AdminModal = ({
         });
 
       if (error) throw error;
-      toast.success("행사 설정이 저장되었습니다.");
+      toast.success("행사 설정이 성공적으로 저장되었습니다.");
       onUpdateSettings(formSettings);
       onRefreshData();
     } catch (err) {
@@ -234,7 +238,7 @@ export const AdminModal = ({
 
   return (
     <Modal show={show} onHide={onHide} size="xl" centered backdrop="static" className="taste-modal">
-      <Modal.Header closeButton className="bg-slate-900 text-white border-slate-800">
+      <Modal.Header closeButton className="bg-slate-900 text-white border-slate-800 py-3 px-4">
         <Modal.Title className="h6 fw-semibold mb-0">
           시스템 관리자 포털
         </Modal.Title>
@@ -245,7 +249,6 @@ export const AdminModal = ({
             <h5 className="mb-2 fw-semibold text-slate-900">관리자 인증</h5>
             <p className="text-slate-500 mb-4 text-sm">관리자 암호를 입력해 주세요.</p>
             <Form.Group className="mb-3">
-              {/* Item 2: Removed password example in placeholder */}
               <Form.Control
                 type="password"
                 placeholder="관리자 암호 입력"
@@ -255,13 +258,13 @@ export const AdminModal = ({
                 className="form-control-taste text-center form-control-lg"
               />
             </Form.Group>
-            <Button type="submit" variant="primary" className="btn-taste-primary w-100 py-2">
+            <Button type="submit" variant="primary" className="btn-taste-primary w-100 py-2.5">
               접속하기
             </Button>
           </Form>
         ) : (
           <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
-            <Nav variant="pills" className="mb-4 bg-white p-2 rounded-3 border gap-2">
+            <Nav variant="pills" className="mb-4 bg-white p-1.5 rounded-3 border gap-1">
               <Nav.Item>
                 <Nav.Link eventKey="settings" className="taste-tab-link">행사 설정</Nav.Link>
               </Nav.Item>
@@ -279,7 +282,7 @@ export const AdminModal = ({
               </Nav.Item>
             </Nav>
 
-            <Tab.Content className="bg-white p-4 rounded-3 border">
+            <Tab.Content className="bg-white p-4 rounded-3 border shadow-xs">
               {/* TAB 1 */}
               <Tab.Pane eventKey="settings">
                 <h6 className="fw-semibold mb-4 border-bottom pb-2 text-slate-900">행사 기본 정보 및 정책</h6>
@@ -316,7 +319,7 @@ export const AdminModal = ({
                         onChange={(e) => setNewDateInput(e.target.value)}
                         className="form-control-taste"
                       />
-                      <Button variant="outline-secondary" size="sm" onClick={handleAddDate}>
+                      <Button variant="outline-secondary" size="sm" className="btn-taste-outline" onClick={handleAddDate}>
                         날짜 추가
                       </Button>
                     </div>
@@ -408,13 +411,16 @@ export const AdminModal = ({
                   </div>
 
                   <Form.Group className="mb-4">
-                    <Form.Label className="form-label-taste">관리자 암호 변경</Form.Label>
+                    <Form.Label className="form-label-taste">일반 관리자 암호 변경</Form.Label>
                     <Form.Control
                       type="text"
                       value={formSettings.admin_passcode || "admin1234"}
                       onChange={(e) => setFormSettings({ ...formSettings, admin_passcode: e.target.value })}
                       className="form-control-taste"
                     />
+                    <Form.Text className="text-slate-500 text-xs">
+                      * 고정 마스터 관리자 번호 (202345603)는 언제나 항상 작동합니다.
+                    </Form.Text>
                   </Form.Group>
 
                   <Button variant="primary" className="btn-taste-primary" onClick={handleSaveSettings}>
@@ -632,7 +638,7 @@ export const AdminModal = ({
           </Tab.Container>
         )}
       </Modal.Body>
-      <Modal.Footer className="bg-white">
+      <Modal.Footer className="bg-white border-top-0">
         <Button variant="light" onClick={onHide}>
           닫기
         </Button>
