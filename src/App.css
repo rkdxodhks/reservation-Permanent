@@ -1,61 +1,174 @@
 /* ========================================================
-   스마트 부스 예약 시스템 2.0 (Remastered CSS)
-   Authentic, Clean, Human-Centered UI/UX Design System
+   부산대학교 약학대학 BAF 체험부스 예약 시스템 2.0
+   PNU Premium & Human-Centered Design System
    ======================================================== */
 
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
 :root {
   --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-  --bg-app: #f8fafc;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border-light: #e2e8f0;
   
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-subtle: #eff6ff;
+  /* PNU Brand Palette */
+  --pnu-navy: #0a192f;
+  --pnu-navy-light: #1e293b;
+  --pnu-blue: #1f4ef5;
+  --pnu-blue-hover: #1640d6;
+  --pnu-blue-subtle: #eff6ff;
+  --pnu-gold: #fbbf24;
 
-  --emerald-color: #059669;
+  --bg-slate: #f8fafc;
+  --text-dark: #0f172a;
+  --text-slate: #475569;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+
+  --emerald-main: #10b981;
   --emerald-subtle: #ecfdf5;
-
-  --rose-color: #e11d48;
-  --rose-subtle: #fff1f2;
+  --rose-main: #ef4444;
+  --rose-subtle: #fef2f2;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-app);
-  color: var(--text-main);
+  background-color: var(--bg-slate);
+  color: var(--text-dark);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Container Limit */
+/* Container */
 .max-w-7xl {
   max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
 }
 
-.max-w-sm {
-  max-width: 380px;
+.fs-7 {
+  font-size: 0.75rem;
 }
 
-.max-w-md {
-  max-width: 480px;
+/* Header & Brand Bar */
+.pnu-header {
+  background: linear-gradient(135deg, #0a192f 0%, #1e293b 100%);
+  color: #ffffff;
+  backdrop-filter: blur(12px);
 }
 
-/* Navbar */
-.navbar {
-  backdrop-filter: blur(8px);
-  background-color: rgba(255, 255, 255, 0.92) !important;
+.pnu-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: contain;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2px;
+}
+
+.baf-logo {
+  height: 32px;
+  object-fit: contain;
+  filter: brightness(1.1);
+}
+
+.brand-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.bg-pnu-gold {
+  background-color: var(--pnu-gold);
+}
+
+.brand-title {
+  letter-spacing: -0.02em;
+}
+
+.btn-admin-pill {
+  border-color: rgba(255, 255, 255, 0.25);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.btn-admin-pill:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: #ffffff;
+}
+
+/* PNU Card System */
+.pnu-card {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.icon-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.bg-pnu-blue {
+  background-color: var(--pnu-blue);
+}
+
+.bg-pnu-navy {
+  background-color: var(--pnu-navy);
+}
+
+/* Form inputs */
+.form-label-custom {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-slate);
+  margin-bottom: 0.35rem;
+}
+
+.form-control-styled {
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.925rem;
+  transition: all 0.2s ease;
+}
+
+.form-control-styled:focus {
+  border-color: var(--pnu-blue);
+  box-shadow: 0 0 0 3px rgba(31, 78, 245, 0.12);
+}
+
+/* Date Selector Buttons */
+.date-select-btn {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: #ffffff;
+  color: var(--text-slate);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.date-select-btn:hover {
+  border-color: var(--pnu-blue);
+  color: var(--pnu-blue);
+  background-color: var(--pnu-blue-subtle);
+}
+
+.date-select-btn.active {
+  background-color: var(--pnu-blue);
+  border-color: var(--pnu-blue);
+  color: #ffffff;
 }
 
 /* Booth Pill Buttons */
 .booth-pill-btn {
-  padding: 0.5rem 0.9rem;
+  padding: 0.55rem 1rem;
   border-radius: 9999px;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: none;
 }
@@ -71,18 +184,19 @@ body {
   display: inline-block;
 }
 
-/* Slot Cards Design */
+/* Timetable Cards */
 .slot-card {
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   background-color: #ffffff;
+  overflow: hidden;
 }
 
 .slot-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.1);
   cursor: pointer;
 }
 
@@ -92,8 +206,9 @@ body {
 }
 
 .slot-card-mine {
-  border-color: #10b981 !important;
-  background-color: #f0fdf4 !important;
+  border: 2px solid #10b981 !important;
+  background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%) !important;
+  box-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.15) !important;
 }
 
 .slot-card-partially {
@@ -113,51 +228,40 @@ body {
 }
 
 .slot-card-blocked {
-  opacity: 0.5;
-  background-color: #f1f5f9;
-  border-style: dashed;
+  opacity: 0.55;
+  background: repeating-linear-gradient(
+    45deg,
+    #f1f5f9,
+    #f1f5f9 10px,
+    #e2e8f0 10px,
+    #e2e8f0 20px
+  ) !important;
+  cursor: not-allowed !important;
 }
 
-.bg-emerald-light {
-  background-color: #d1fae5;
+.text-pnu-blue {
+  color: var(--pnu-blue) !important;
 }
 
-.text-emerald {
-  color: #047857;
-}
-
-.border-emerald {
-  border-color: #10b981 !important;
-}
-
-/* Reservation item rows */
-.reservation-item-row {
-  transition: all 0.15s ease;
-}
-
-.reservation-item-row:hover {
-  background-color: #f1f5f9 !important;
-}
-
-/* Admin Modal Styling */
-.admin-modal .modal-content {
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.admin-modal .nav-pills .nav-link {
-  color: var(--text-muted);
-  font-weight: 500;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-}
-
-.admin-modal .nav-pills .nav-link.active {
-  background-color: var(--primary-color);
+.btn-pnu-primary {
+  background-color: var(--pnu-blue);
+  border-color: var(--pnu-blue);
   color: #ffffff;
 }
 
-/* Responsive Touch & Spacing adjustments */
+.btn-pnu-primary:hover {
+  background-color: var(--pnu-blue-hover);
+  border-color: var(--pnu-blue-hover);
+  color: #ffffff;
+}
+
+/* Footer */
+.pnu-footer {
+  background-color: #ffffff;
+  color: var(--text-muted);
+}
+
+/* Responsive Touch Adjustments */
 @media (max-width: 767.98px) {
   .slot-card .slot-time {
     font-size: 1.05rem !important;
