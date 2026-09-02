@@ -85,24 +85,11 @@ const Timetable = ({
 
   return (
     <div className="timetable-wrapper">
-      {/* Header section with Item 4: Enlarged main date display */}
-      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 pb-3 border-bottom gap-2">
-        <div>
-          <h4 className="fw-semibold mb-1 text-slate-900">
-            {selectedLab} <span className="text-slate-500 fs-6 fw-normal">예약 시간표</span>
-          </h4>
-          <p className="text-slate-500 small mb-0">
-            시간대 카드를 선택하면 예약 신청이 진행됩니다. (슬롯당 1인 제한)
-          </p>
-        </div>
-        
-        {/* Item 4: Enlarged prominent date pill */}
-        <div className="mt-1 mt-sm-0">
-          <div className="prominent-date-badge">
-            <span className="text-slate-500 text-xs font-mono me-1">DATE</span>
-            <span className="fw-bold fs-5 text-slate-900">{selectedDate || "날짜 미선택"}</span>
-          </div>
-        </div>
+      {/* Clean Main Header (Subtitle and Date badge removed per request) */}
+      <div className="mb-3 pb-3 border-bottom">
+        <h4 className="fw-semibold mb-0 text-slate-900">
+          {selectedLab} <span className="text-slate-500 fs-6 fw-normal">예약 시간표</span>
+        </h4>
       </div>
 
       {/* Timetable Slot Grid */}

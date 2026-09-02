@@ -1,4 +1,4 @@
-// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with clean, responsive 3-column desktop layout (Left: Student Info & Dates, Center: Main Timetable, Right: My Reservations).
+// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with clean 3-column layout (Left: Student Info & Booth List, Center: Main Timetable, Right: Event Date Selector on top of My Reservations).
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LabsList, MyReservations } from "./StatusPanel";
@@ -228,7 +228,7 @@ function App() {
           r.time_slot === modalContext.timeSlot
       ).length;
 
-      const slotCapacityLimit = settings.max_capacity_per_slot || 1; // Item 8: 1 per slot default
+      const slotCapacityLimit = settings.max_capacity_per_slot || 1;
       if (slotResCount >= slotCapacityLimit) {
         toast.error("해당 시간대는 이미 정원이 마감되었습니다.");
         setLoading(false);
@@ -288,36 +288,33 @@ function App() {
 
       {/* HEADER BAR */}
       <header className="taste-header sticky-top border-bottom">
-        <div className="container-fluid max-w-7xl px-3 py-3 d-flex justify-content-between align-items-center">
+        <div className="container-fluid max-w-7xl px-3 py-2.5 d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-3">
             <div className="brand-logo-group d-flex align-items-center gap-2">
+              {/* Item 3: Enlarged PNU Logo */}
               <img
                 src={`${publicUrl}/부산대.ico`}
                 alt="PNU"
-                className="brand-icon"
+                className="brand-icon-lg"
               />
               <div className="brand-line" />
               <img
                 src={`${publicUrl}/baf-logo.png`}
                 alt="BAF"
-                className="baf-icon"
+                className="baf-icon-lg"
               />
             </div>
 
             <div>
               <div className="d-flex align-items-center gap-2">
-                {/* Item 7: PNU BioMaterial Science */}
                 <span className="pill-tag font-mono">
                   PNU BioMaterial Science
                 </span>
-                {/* Item 1: 부산대 바이오소재과학과 명칭 변경 */}
                 <h1 className="h6 fw-semibold mb-0 text-slate-900 brand-title">
                   {settings.event_title || "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템"}
                 </h1>
               </div>
-              <small className="text-slate-500 d-none d-md-inline text-xs">
-                부산대학교 바이오소재과학과 연구실 체험부스 실시간 예약 플랫폼
-              </small>
+              {/* Item 4: Subtitle removed per request */}
             </div>
           </div>
 
@@ -333,11 +330,11 @@ function App() {
         </div>
       </header>
 
-      {/* MAIN CONTENT: 3-COLUMN DESKTOP LAYOUT (Item 3) */}
+      {/* MAIN CONTENT: 3-COLUMN DESKTOP LAYOUT */}
       <main className="container-fluid max-w-7xl py-4 flex-grow-1">
         <div className="row g-4">
           
-          {/* LEFT COLUMN (col-12 col-lg-3): Student Form & Date Selector */}
+          {/* LEFT COLUMN (col-12 col-lg-3): Student Form & Booth List */}
           <div className="col-12 col-lg-3">
             
             {/* Student Info Card */}
@@ -353,7 +350,6 @@ function App() {
               <Form>
                 <Form.Group className="mb-3">
                   <Form.Label className="form-label-taste">학번</Form.Label>
-                  {/* Item 5: 학번 예시 202345603 */}
                   <Form.Control
                     type="text"
                     placeholder="예: 202345603"
@@ -386,31 +382,6 @@ function App() {
                   />
                 </Form.Group>
               </Form>
-            </div>
-
-            {/* Date Selector Card */}
-            <div className="taste-card p-4 mb-3">
-              <h6 className="fw-semibold mb-3 text-slate-900 d-flex align-items-center gap-2">
-                <CalendarIcon />
-                <span>행사 날짜</span>
-              </h6>
-              <div className="d-flex flex-column gap-2">
-                {settings.event_dates?.map((dateStr) => {
-                  const isSelected = selectedDate === dateStr;
-                  return (
-                    <button
-                      key={dateStr}
-                      type="button"
-                      className={`btn date-pill-btn w-100 py-2.5 ${
-                        isSelected ? "active" : ""
-                      }`}
-                      onClick={() => setSelectedDate(dateStr)}
-                    >
-                      <span>{dateStr}</span>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Booth List Selector (Desktop) */}
@@ -446,7 +417,7 @@ function App() {
                 )}
                 currentReservationCount={currentReservationCount}
                 maxReservationsPerStudent={settings.max_reservations_per_student || 2}
-                maxCapacityPerSlot={settings.max_capacity_per_slot || 1} // Item 8: 1 slot limit
+                maxCapacityPerSlot={settings.max_capacity_per_slot || 1}
                 timeSlots={timeSlots}
                 slotBlocks={slotBlocks}
                 onCardClick={handleTimeSlotClick}
@@ -455,8 +426,34 @@ function App() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN (col-12 col-lg-3): Item 3 - Dedicated My Reservations Panel */}
+          {/* RIGHT COLUMN (col-12 col-lg-3): Item 1 - Date Selector ON TOP of My Reservations */}
           <div className="col-12 col-lg-3">
+            {/* Date Selector Card */}
+            <div className="taste-card p-4 mb-3">
+              <h6 className="fw-semibold mb-3 text-slate-900 d-flex align-items-center gap-2">
+                <CalendarIcon />
+                <span>행사 날짜 선택</span>
+              </h6>
+              <div className="d-flex flex-column gap-2">
+                {settings.event_dates?.map((dateStr) => {
+                  const isSelected = selectedDate === dateStr;
+                  return (
+                    <button
+                      key={dateStr}
+                      type="button"
+                      className={`btn date-pill-btn w-100 py-2.5 ${
+                        isSelected ? "active" : ""
+                      }`}
+                      onClick={() => setSelectedDate(dateStr)}
+                    >
+                      <span>{dateStr}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* My Reservations Card */}
             <MyReservations
               studentId={studentId}
               reservationsByDate={{ [selectedDate]: reservations }}
@@ -476,14 +473,13 @@ function App() {
             <img
               src={`${publicUrl}/부산대.ico`}
               alt="PNU"
-              style={{ width: "20px", height: "20px" }}
+              style={{ width: "24px", height: "24px" }}
             />
             <img
               src={`${publicUrl}/baf-logo.png`}
               alt="BAF"
-              style={{ height: "20px" }}
+              style={{ height: "22px" }}
             />
-            {/* Item 1: 부산대학교 바이오소재과학과 BAF */}
             <span className="fw-medium text-slate-700 text-sm">부산대학교 바이오소재과학과 BAF</span>
           </div>
           <p className="mb-0 text-slate-500 small">
