@@ -84,9 +84,12 @@ function App() {
         .select("*")
         .order("display_order", { ascending: true });
       if (!error && data && data.length > 0) {
-        setBooths(data);
-        if (!data.some((b) => b.name === selectedLab)) {
-          setSelectedLab(data[0].name);
+        const uniqueData = data.filter(
+          (b, idx, self) => idx === self.findIndex((item) => item.name === b.name)
+        );
+        setBooths(uniqueData);
+        if (!uniqueData.some((b) => b.name === selectedLab)) {
+          setSelectedLab(uniqueData[0].name);
         }
       }
     } catch (err) {

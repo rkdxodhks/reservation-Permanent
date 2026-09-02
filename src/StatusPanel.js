@@ -1,35 +1,43 @@
 import React from "react";
 
-export const LabsList = ({ booths = [], selectedLab, onLabSelect }) => (
-  <div className="booth-selection-panel">
-    <h6 className="fw-semibold mb-3 text-slate-900">
-      체험 부스 선택
-    </h6>
-    <div className="booth-pill-container d-flex flex-wrap gap-2">
-      {booths.map((booth) => {
-        const isSelected = selectedLab === booth.name;
-        return (
-          <button
-            key={booth.id || booth.name}
-            type="button"
-            className={`btn booth-taste-pill d-flex align-items-center gap-2 ${
-              isSelected ? "active" : ""
-            }`}
-            onClick={() => onLabSelect(booth.name)}
-          >
-            <span
-              className="booth-dot"
-              style={{
-                backgroundColor: isSelected ? "#ffffff" : booth.color_tag || "#2563eb",
-              }}
-            />
-            <span className="fw-medium">{booth.name}</span>
-          </button>
-        );
-      })}
+export const LabsList = ({ booths = [], selectedLab, onLabSelect }) => {
+  // Deduplicate booths by name to ensure no duplicate buttons appear in UI
+  const uniqueBooths = (booths || []).filter(
+    (booth, index, self) =>
+      index === self.findIndex((b) => b.name === booth.name)
+  );
+
+  return (
+    <div className="booth-selection-panel">
+      <h6 className="fw-semibold mb-3 text-slate-900">
+        체험 부스 선택
+      </h6>
+      <div className="booth-pill-container d-flex flex-wrap gap-2">
+        {uniqueBooths.map((booth) => {
+          const isSelected = selectedLab === booth.name;
+          return (
+            <button
+              key={booth.id || booth.name}
+              type="button"
+              className={`btn booth-taste-pill d-flex align-items-center gap-2 ${
+                isSelected ? "active" : ""
+              }`}
+              onClick={() => onLabSelect(booth.name)}
+            >
+              <span
+                className="booth-dot"
+                style={{
+                  backgroundColor: isSelected ? "#ffffff" : booth.color_tag || "#2563eb",
+                }}
+              />
+              <span className="fw-medium">{booth.name}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const MyReservations = ({
   studentId,
