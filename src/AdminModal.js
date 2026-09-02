@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Tab, Nav, Table, Alert } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { supabase } from "./supabaseClient";
+import { generateTimeSlots } from "./constants";
 
 // Modern SVG Icons for Admin Console
 const AdminGearIcon = () => (
@@ -712,7 +713,11 @@ export const AdminModal = ({
                 </div>
 
                 <div className="d-flex flex-wrap gap-2">
-                  {["10:00", "10:20", "10:40", "11:00", "11:20", "11:40", "14:00", "14:20", "14:40", "15:00", "15:20", "15:40"].map((slot) => {
+                  {generateTimeSlots(
+                    formSettings.start_time || "10:00",
+                    formSettings.end_time || "16:00",
+                    formSettings.slot_interval || 20
+                  ).map((slot) => {
                     const isBlocked = slotBlocks.some(
                       (b) =>
                         b.booth_id === selectedBlockBooth &&

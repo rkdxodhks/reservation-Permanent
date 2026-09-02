@@ -511,4 +511,9 @@ body {
   .app-main-content-mobile {
     padding-bottom: 95px !important;
   }
+
+  /* Fix #10: Ensure footer also clears the floating Liquid Glass dock */
+  .taste-footer {
+    padding-bottom: calc(1.5rem + 80px + env(safe-area-inset-bottom, 0px)) !important;
+  }
 }

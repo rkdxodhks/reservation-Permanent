@@ -1,5 +1,3 @@
-// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with Apple Liquid Glass mobile floating bar and responsive 3-column desktop layout.
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LabsList, MyReservations } from "./StatusPanel";
 import Timetable from "./Timetable";
@@ -288,6 +286,8 @@ function App() {
 
       toast.success("예약이 완료되었습니다.");
       fetchReservationsAndBlocks();
+      // Fix #4: Auto-return to timetable tab on mobile so user sees their reservation immediately
+      setMobileTab("timetable");
     } catch (err) {
       console.error("Create reservation error:", err);
       toast.error(`예약 처리 중 오류: ${err.message}`);
@@ -493,7 +493,7 @@ function App() {
 
               <MyReservations
                 studentId={studentId}
-                reservationsByDate={{ [selectedDate]: reservations }}
+                reservations={reservations}
                 currentReservationCount={currentReservationCount}
                 maxReservationsPerStudent={Number(settings.max_reservations_per_student) || 2}
                 onReservationClick={handleMyReservationClick}
@@ -649,7 +649,7 @@ function App() {
             <div className="mobile-tab-view animate-fade-in">
               <MyReservations
                 studentId={studentId}
-                reservationsByDate={{ [selectedDate]: reservations }}
+                reservations={reservations}
                 currentReservationCount={currentReservationCount}
                 maxReservationsPerStudent={Number(settings.max_reservations_per_student) || 2}
                 onReservationClick={handleMyReservationClick}
@@ -810,7 +810,7 @@ function App() {
             </Button>
           ) : (
             <Button variant="danger" className="btn-taste-danger" onClick={handleConfirmCancel} disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : "취소 검증 및 실행"}
+              {loading ? <Spinner animation="border" size="sm" /> : "예약 취소하기"}
             </Button>
           )}
         </Modal.Footer>

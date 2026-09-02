@@ -41,15 +41,18 @@ export const LabsList = ({ booths = [], selectedLab, onLabSelect }) => {
 
 export const MyReservations = ({
   studentId,
-  reservationsByDate = {},
+  reservations = [],  // Fix #7: accept flat array instead of reservationsByDate object
   currentReservationCount = 0,
   maxReservationsPerStudent = 2,
   onReservationClick,
 }) => {
-  const allReservations = Object.values(reservationsByDate).flat();
+  // Fix #7: show ALL reservations for this student across all dates
   const myReservations = studentId
-    ? allReservations.filter((r) => r.student_id === studentId)
+    ? reservations.filter((r) => r.student_id === studentId)
     : [];
+
+  const maxCount = Number(maxReservationsPerStudent) || 2;
+  const isAtLimit = currentReservationCount >= maxCount;
 
   return (
     <div className="taste-card p-4 mt-3">
@@ -58,14 +61,19 @@ export const MyReservations = ({
           나의 예약 현황
         </h6>
         {studentId && (
+          // Fix #3: use inline styles instead of Tailwind classes that don't apply in Bootstrap context
           <span
-            className={`badge rounded-pill ${
-              currentReservationCount >= maxReservationsPerStudent
-                ? "bg-rose-100 text-rose-700"
-                : "bg-blue-100 text-blue-700"
-            }`}
+            style={{
+              display: "inline-block",
+              padding: "0.2rem 0.6rem",
+              borderRadius: "9999px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              backgroundColor: isAtLimit ? "#ffe4e6" : "#dbeafe",
+              color: isAtLimit ? "#be123c" : "#1e40af",
+            }}
           >
-            {currentReservationCount} / {maxReservationsPerStudent} 회
+            {currentReservationCount} / {maxCount} 회
           </span>
         )}
       </div>
@@ -83,6 +91,7 @@ export const MyReservations = ({
                   key={reservation.id}
                   className="my-res-row p-2 border rounded-3 d-flex justify-content-between align-items-center bg-slate-50"
                   onClick={() => onReservationClick(reservation)}
+                  style={{ cursor: "pointer" }}
                 >
                   <div className="overflow-hidden me-2">
                     <div className="fw-medium text-slate-900 text-truncate text-sm">

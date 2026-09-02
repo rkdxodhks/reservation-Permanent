@@ -147,6 +147,12 @@ const Timetable = ({
 
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     {getStatusBadge(status, reservationsForSlot.length, maxCapacity)}
+                    {/* Fix #6: Show remaining/total slots */}
+                    {status !== "blocked" && status !== "disabled" && (
+                      <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontVariantNumeric: "tabular-nums" }}>
+                        {maxCapacity - reservationsForSlot.length}/{maxCapacity}
+                      </span>
+                    )}
                   </div>
 
                   {isAdminMode && reservationsForSlot.length > 0 && (
