@@ -336,7 +336,8 @@ body {
 }
 
 /* ========================================================
-   Authentic Apple Liquid Glass Floating Dock (Mobile Only)
+   Apple Liquid Glass Floating Dock (Mobile Only)
+   iOS 26 / macOS Tahoe "Liquid Glass" Material Recreation
    ======================================================== */
 .liquid-glass-container {
   position: fixed;
@@ -348,45 +349,103 @@ body {
   align-items: center;
   z-index: 1040;
   pointer-events: none;
-  padding: 0 16px;
+  padding: 0 20px;
 }
 
 .liquid-glass-bar {
   pointer-events: auto;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-around;
   width: 100%;
-  max-width: 360px;
-  /* Authentic Apple Smoky Liquid Glass */
-  background: linear-gradient(180deg, rgba(28, 28, 34, 0.78) 0%, rgba(16, 16, 20, 0.84) 100%);
-  -webkit-backdrop-filter: blur(32px) saturate(220%) contrast(105%);
-  backdrop-filter: blur(32px) saturate(220%) contrast(105%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-top: 1px solid rgba(255, 255, 255, 0.32);
-  box-shadow: 0 18px 42px -6px rgba(0, 0, 0, 0.35), 
-              0 1px 1px rgba(255, 255, 255, 0.18) inset, 
-              0 -1px 2px rgba(0, 0, 0, 0.3) inset;
+  max-width: 340px;
+  padding: 6px 8px;
   border-radius: 9999px;
-  padding: 5px 8px;
+  overflow: hidden;
+  isolation: isolate;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* === Apple Liquid Glass Core Material ===
+     Light frosted white glass base — key characteristic of iOS 26 Liquid Glass.
+     The genuine Apple "Vibrancy" effect (OS-level luminosity blending) cannot
+     be exactly reproduced in CSS, but backdrop-filter gets very close.        */
+  background: rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.12) contrast(1.04);
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.12) contrast(1.04);
+
+  /* Multi-layer glass depth shadow */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.14),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),  /* top specular rim */
+    inset 0 -1px 0 rgba(255, 255, 255, 0.22); /* bottom inner rim */
+
+  /* Iridescent gradient border (conic mimicry) */
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
 }
 
+/* Iridescent glass edge via ::after pseudo-element */
+.liquid-glass-bar::after {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.90) 0%,
+    rgba(200, 210, 255, 0.55) 25%,
+    rgba(255, 210, 240, 0.45) 50%,
+    rgba(210, 240, 255, 0.55) 75%,
+    rgba(255, 255, 255, 0.90) 100%
+  );
+  z-index: -1;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1.5px;
+}
+
+/* Top specular glint — the most distinctive Apple Liquid Glass feature.
+   A bright, white gradient that simulates diffuse light hitting the top
+   of a curved glass surface.                                              */
+.liquid-glass-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 5%;
+  height: 48%;
+  border-radius: 9999px 9999px 60% 60% / 100% 100% 50% 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.24) 55%,
+    rgba(255, 255, 255, 0.00) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Tabs must sit above the ::before glint layer */
 .liquid-glass-tab {
+  position: relative;
+  z-index: 2;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px 4px;
+  padding: 7px 4px;
   border-radius: 9999px;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(0, 0, 0, 0.55);
   font-size: 0.6875rem;
   font-weight: 600;
   cursor: pointer;
-  position: relative;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   gap: 2px;
   user-select: none;
@@ -396,20 +455,24 @@ body {
   transform: scale(0.92);
 }
 
+/* Active tab: inner glass capsule bubble — Apple-style frosted white pill */
 .liquid-glass-tab.active {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.22) inset;
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(0, 0, 0, 0.88);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
 
 .liquid-glass-tab svg {
-  transition: transform 0.2s ease, stroke 0.2s ease;
-  stroke: rgba(255, 255, 255, 0.6);
+  transition: transform 0.2s ease;
+  stroke: rgba(0, 0, 0, 0.5);
 }
 
 .liquid-glass-tab.active svg {
   transform: translateY(-1px);
-  stroke: #ffffff;
+  stroke: rgba(0, 0, 0, 0.85);
 }
 
 .liquid-badge {
@@ -427,7 +490,8 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.5);
+  z-index: 3;
 }
 
 .liquid-dot {
@@ -438,7 +502,8 @@ body {
   height: 7px;
   border-radius: 50%;
   background-color: #f59e0b;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
+  z-index: 3;
 }
 
 /* Mobile Content Padding so Floating Bar doesn't overlap */
