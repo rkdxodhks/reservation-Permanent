@@ -1,0 +1,27 @@
+name: Supabase Keep Alive
+
+# Automatically ping Supabase every 3 days so the free-tier database never pauses due to inactivity
+on:
+  schedule:
+    # Runs every 3 days at 00:00 UTC (9:00 AM KST)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
+
+jobs:
+  keep_alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "Sending keep-alive ping to Supabase..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+            "https://bptfowdkwjakafahbopy.supabase.co/rest/v1/app_settings?select=id" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdGZvd2Rrd2pha2FmYWhib3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMzE5OTEsImV4cCI6MjEwMzkwNzk5MX0.YIM-0am4ijLZq2n5dEraIN_ZR_wchpwHdhy33fOHvFk" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdGZvd2Rrd2pha2FmYWhib3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMzE5OTEsImV4cCI6MjEwMzkwNzk5MX0.YIM-0am4ijLZq2n5dEraIN_ZR_wchpwHdhy33fOHvFk")
+          
+          echo "Supabase Response HTTP Code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Supabase is active, awake, and healthy!"
+          else
+            echo "⚠️ Ping received status: $HTTP_STATUS"
+          fi
