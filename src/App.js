@@ -1,950 +1,515 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LabsList, MyReservations } from "./StatusPanel";
 import Timetable from "./Timetable";
-import { LABS, MAX_RESERVATIONS_PER_SLOT } from "./constants";
+import AdminModal from "./AdminModal";
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_BOOTHS,
+  generateTimeSlots,
+} from "./constants";
 import { supabase } from "./supabaseClient";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import {
-  Modal,
-  Button,
-  Spinner,
-  Tooltip,
-  OverlayTrigger,
-} from "react-bootstrap";
+import { Modal, Button, Form, Spinner } from "react-bootstrap";
 import { ToastContainer, toast, Slide } from "react-toastify";
-import { useSwipeable } from "react-swipeable";
+import "react-toastify/dist/ReactToastify.css";
 
-// Main App Component
 function App() {
-  // Global State
+  // 1. Dynamic Config State
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [booths, setBooths] = useState(DEFAULT_BOOTHS);
+  const [reservations, setReservations] = useState([]);
+  const [slotBlocks, setSlotBlocks] = useState([]);
+
+  // 2. User & Selection State
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
   const [authNumber, setAuthNumber] = useState("");
-  const [selectedLab, setSelectedLab] = useState(LABS[0]);
-  const [reservationsByDate, setReservationsByDate] = useState({
-    today: [],
-    tomorrow: [],
-  });
-  const [selectedDate, setSelectedDate] = useState("");
-  const [currentReservationCount, setCurrentReservationCount] = useState(0);
+  const [selectedLab, setSelectedLab] = useState(DEFAULT_BOOTHS[0].name);
+  const [selectedDate, setSelectedDate] = useState(DEFAULT_SETTINGS.event_dates[0]);
 
-  // UI & Modal State
+  // 3. UI & Admin Modal State
   const [loading, setLoading] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [modalContext, setModalContext] = useState(null);
-  const [currentStep, setCurrentStep] = useState(1); // 1: 정보입력, 2: 확인, 3: 완료
-  const [validationErrors, setValidationErrors] = useState({});
-  const [dateToggleAnimation, setDateToggleAnimation] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [cancellingReservationId, setCancellingReservationId] = useState(null);
+  const [currentReservationCount, setCurrentReservationCount] = useState(0);
 
-  const channelRef = useRef(null);
-  const todayStr = "2025-11-11";
-  const tomorrowStr = "2025-11-12";
+  const channelsRef = useRef([]);
 
-  useEffect(() => {
-    setSelectedDate(todayStr);
-  }, [todayStr]);
-
-  // 관리자 모드 체크
-  useEffect(() => {
-    const isAdmin = studentId === "202345603" && authNumber === "202345603";
-    setIsAdminMode(isAdmin);
-
-    if (isAdmin && studentName !== "관리자") {
-      setStudentName("관리자");
-      toast.success("관리자 모드가 활성화되었습니다", {
-        position: "top-center",
-        autoClose: 2000,
-        hideProgressBar: true,
-      });
+  // Fetch Settings from Supabase
+  const fetchSettings = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from("app_settings").select("*").eq("id", 1).single();
+      if (!error && data) {
+        setSettings(data);
+        if (data.event_dates && data.event_dates.length > 0) {
+          if (!data.event_dates.includes(selectedDate)) {
+            setSelectedDate(data.event_dates[0]);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Using default settings fallback:", err);
     }
-  }, [studentId, authNumber, studentName]);
+  }, [selectedDate]);
 
-  const fetchAllReservations = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("reservations")
-      .select("*")
-      .in("date", [todayStr, tomorrowStr]);
-    if (error) {
-      console.error("Error fetching reservations:", error);
-      setReservationsByDate({ today: [], tomorrow: [] });
-    } else {
-      setReservationsByDate({
-        today: (data || []).filter((r) => r.date === todayStr),
-        tomorrow: (data || []).filter((r) => r.date === tomorrowStr),
-      });
+  // Fetch Booths from Supabase
+  const fetchBooths = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("booths")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (!error && data && data.length > 0) {
+        setBooths(data);
+        if (!data.some((b) => b.name === selectedLab)) {
+          setSelectedLab(data[0].name);
+        }
+      }
+    } catch (err) {
+      console.warn("Using default booths fallback:", err);
     }
-  }, [todayStr, tomorrowStr]);
+  }, [selectedLab]);
 
+  // Fetch Reservations & Blocks from Supabase
+  const fetchReservationsAndBlocks = useCallback(async () => {
+    try {
+      const { data: resData, error: resErr } = await supabase.from("reservations").select("*");
+      if (!resErr && resData) {
+        setReservations(resData);
+      }
+
+      const { data: blockData, error: blockErr } = await supabase.from("slot_blocks").select("*");
+      if (!blockErr && blockData) {
+        setSlotBlocks(blockData);
+      }
+    } catch (err) {
+      console.warn("Error fetching reservations or blocks:", err);
+    }
+  }, []);
+
+  // Refresh all
+  const handleRefreshAll = useCallback(() => {
+    fetchSettings();
+    fetchBooths();
+    fetchReservationsAndBlocks();
+  }, [fetchSettings, fetchBooths, fetchReservationsAndBlocks]);
+
+  // Initial Load & Realtime Subscriptions
   useEffect(() => {
-    fetchAllReservations();
-    const channel = supabase
-      .channel("reservations-all-days")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "reservations" },
-        fetchAllReservations
-      )
+    handleRefreshAll();
+
+    // Supabase Realtime Channels
+    const channel1 = supabase
+      .channel("realtime-app-settings")
+      .on("postgres_changes", { event: "*", schema: "public", table: "app_settings" }, fetchSettings)
       .subscribe();
-    channelRef.current = channel;
-    return () => {
-      if (channelRef.current) supabase.removeChannel(channelRef.current);
-    };
-  }, [fetchAllReservations]);
 
-  const updateReservationCount = useCallback(() => {
+    const channel2 = supabase
+      .channel("realtime-booths")
+      .on("postgres_changes", { event: "*", schema: "public", table: "booths" }, fetchBooths)
+      .subscribe();
+
+    const channel3 = supabase
+      .channel("realtime-reservations")
+      .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, fetchReservationsAndBlocks)
+      .subscribe();
+
+    const channel4 = supabase
+      .channel("realtime-blocks")
+      .on("postgres_changes", { event: "*", schema: "public", table: "slot_blocks" }, fetchReservationsAndBlocks)
+      .subscribe();
+
+    channelsRef.current = [channel1, channel2, channel3, channel4];
+
+    return () => {
+      channelsRef.current.forEach((ch) => supabase.removeChannel(ch));
+    };
+  }, [handleRefreshAll, fetchSettings, fetchBooths, fetchReservationsAndBlocks]);
+
+  // Keyboard shortcut Ctrl+Shift+A for Admin Modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
+        e.preventDefault();
+        setShowAdminModal(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Update current user's reservation count
+  useEffect(() => {
     if (!studentId) {
       setCurrentReservationCount(0);
       return;
     }
-    const allReservations = [
-      ...reservationsByDate.today,
-      ...reservationsByDate.tomorrow,
-    ];
-    const count = allReservations.filter(
-      (r) => r.student_id === studentId
-    ).length;
+    const count = reservations.filter((r) => r.student_id === studentId).length;
     setCurrentReservationCount(count);
-  }, [studentId, reservationsByDate]);
+  }, [studentId, reservations]);
 
-  useEffect(() => {
-    updateReservationCount();
-  }, [studentId, reservationsByDate, updateReservationCount]);
+  // Dynamic time slots array generated from settings
+  const timeSlots = generateTimeSlots(
+    settings.start_time || "10:00",
+    settings.end_time || "16:00",
+    settings.slot_interval || 20
+  );
 
-  const handleShowReservationModal = (context) => {
-    if (!studentId || !authNumber || !studentName) {
-      toast.error("예약자 정보를 모두 입력해주세요.");
+  // Time slot card click
+  const handleTimeSlotClick = (timeSlot, reservationsForSlot) => {
+    if (!studentId || !studentName || !authNumber) {
+      toast.info("예약을 진행하려면 먼저 성함, 학번, 비밀번호를 입력해주세요.");
       setShowInfoModal(true);
       return;
     }
-    setModalContext(context);
-    setShowReservationModal(true);
-  };
 
-  const handleTimeSlotClick = (timeSlot, reservationsForSlot) => {
     const isMyReservation = reservationsForSlot.some(
       (r) => r.student_id === studentId
     );
-    handleShowReservationModal({
+
+    setModalContext({
       type: isMyReservation ? "cancel" : "confirm",
       timeSlot,
       lab: selectedLab,
       date: selectedDate,
       reservationsForSlot,
+      reservationId: reservationsForSlot.find((r) => r.student_id === studentId)?.id,
     });
+    setShowReservationModal(true);
   };
 
+  // My Reservation click cancellation
   const handleMyReservationClick = (reservation) => {
-    handleShowReservationModal({
+    setModalContext({
       type: "cancel",
       timeSlot: reservation.time_slot,
-      lab: reservation.lab_id,
+      lab: reservation.booth_id,
       date: reservation.date,
       reservationId: reservation.id,
     });
+    setShowReservationModal(true);
   };
 
+  // Confirm create reservation
   const handleConfirmReservation = async () => {
     if (!modalContext) return;
     setLoading(true);
+
     try {
-      const { count, error: countError } = await supabase
-        .from("reservations")
-        .select("id", { head: true, count: "exact" })
-        .eq("student_id", studentId);
-      if (countError) throw countError;
-      if (count >= 2) {
-        toast.error("예약은 최대 2회까지만 가능합니다.");
+      // Check user limit
+      const userResCount = reservations.filter((r) => r.student_id === studentId).length;
+      if (userResCount >= (settings.max_reservations_per_student || 2)) {
+        toast.error(`1인당 최대 ${settings.max_reservations_per_student || 2}회까지만 예약 가능합니다.`);
+        setLoading(false);
+        setShowReservationModal(false);
         return;
       }
-      const { error } = await supabase.from("reservations").insert([
-        {
-          time_slot: modalContext.timeSlot,
-          student_id: studentId,
-          student_name: studentName,
-          auth_number: authNumber,
-          date: modalContext.date,
-          lab_id: modalContext.lab,
-        },
-      ]);
+
+      // Check slot capacity
+      const slotResCount = reservations.filter(
+        (r) =>
+          r.booth_id === modalContext.lab &&
+          r.date === modalContext.date &&
+          r.time_slot === modalContext.timeSlot
+      ).length;
+
+      if (slotResCount >= (settings.max_capacity_per_slot || 2)) {
+        toast.error("해당 시간대는 이미 정원이 마감되었습니다.");
+        setLoading(false);
+        setShowReservationModal(false);
+        return;
+      }
+
+      const newReservation = {
+        student_id: studentId,
+        student_name: studentName,
+        auth_number: authNumber,
+        booth_id: modalContext.lab,
+        date: modalContext.date,
+        time_slot: modalContext.timeSlot,
+      };
+
+      const { error } = await supabase.from("reservations").insert([newReservation]);
       if (error) throw error;
-      toast.success("예약이 완료되었습니다.");
-    } catch (error) {
-      console.error("Error creating reservation:", error);
-      toast.error(`예약 실패: ${error.message}`);
-    } finally {
-      setLoading(false);
-      setShowReservationModal(false);
-    }
-  };
 
-  const handleAdminCancelReservation = async (reservationId) => {
-    if (!reservationId) {
-      toast.error("예약 정보를 찾을 수 없습니다.");
-      return;
-    }
-
-    if (!window.confirm("관리자 권한으로 이 예약을 취소하시겠습니까?")) {
-      return;
-    }
-
-    setCancellingReservationId(reservationId);
-    try {
-      const { error: deleteError } = await supabase
-        .from("reservations")
-        .delete()
-        .eq("id", reservationId);
-
-      if (deleteError) throw deleteError;
-
-      toast.success("예약이 취소되었습니다 (관리자)");
-      await fetchAllReservations();
-      setShowReservationModal(false);
+      toast.success("예약이 완료되었습니다!");
+      fetchReservationsAndBlocks();
     } catch (err) {
-      console.error("관리자 예약 취소 오류:", err);
-      toast.error(`예약 취소 실패: ${err.message}`);
-    } finally {
-      setCancellingReservationId(null);
-    }
-  };
-
-  const handleCancelReservation = async () => {
-    if (!modalContext) return;
-    setLoading(true);
-    try {
-      const { data: res, error: fetchError } = await supabase
-        .from("reservations")
-        .select("id, auth_number")
-        .eq("time_slot", modalContext.timeSlot)
-        .eq("date", modalContext.date)
-        .eq("lab_id", modalContext.lab)
-        .eq("student_id", studentId)
-        .single();
-      if (fetchError || !res)
-        throw new Error("취소할 예약 정보를 찾을 수 없습니다.");
-      const MASTER_AUTH_NUMBER = process.env.REACT_APP_MASTER_AUTH_NUMBER;
-      if (authNumber !== MASTER_AUTH_NUMBER && res.auth_number !== authNumber) {
-        toast.error("인증번호가 일치하지 않습니다.");
-        return;
-      }
-      const { error: deleteError } = await supabase
-        .from("reservations")
-        .delete()
-        .match({ id: res.id });
-      if (deleteError) throw deleteError;
-      toast.success("예약이 취소되었습니다.");
-    } catch (error) {
-      console.error("Error canceling reservation:", error);
-      toast.error(`예약 취소 실패: ${error.message}`);
+      console.error("Create reservation error:", err);
+      toast.error(`예약 처리 중 오류: ${err.message}`);
     } finally {
       setLoading(false);
       setShowReservationModal(false);
     }
   };
 
-  const handleDateToggle = () => {
-    setDateToggleAnimation(true);
-    setSelectedDate((currentDate) =>
-      currentDate === todayStr ? tomorrowStr : todayStr
-    );
+  // Confirm cancel reservation
+  const handleConfirmCancel = async () => {
+    if (!modalContext || !modalContext.reservationId) return;
+    setLoading(true);
 
-    // 애니메이션 상태 초기화
-    setTimeout(() => {
-      setDateToggleAnimation(false);
-    }, 600);
-  };
+    try {
+      const { error } = await supabase
+        .from("reservations")
+        .delete()
+        .eq("id", modalContext.reservationId);
 
-  const handleConfirmInfo = () => {
-    if (!studentId || !authNumber || !studentName) {
-      toast.error("예약자 정보를 모두 입력해주세요.");
-      return;
+      if (error) throw error;
+
+      toast.info("예약이 취소되었습니다.");
+      fetchReservationsAndBlocks();
+    } catch (err) {
+      console.error("Cancel reservation error:", err);
+      toast.error(`취소 실패: ${err.message}`);
+    } finally {
+      setLoading(false);
+      setShowReservationModal(false);
     }
-    if (Object.keys(validationErrors).length > 0) {
-      toast.error("입력 정보를 확인해주세요.");
-      return;
-    }
-    setCurrentStep(3); // 완료 단계로 이동
-    setTimeout(() => {
-      toast.success("✅ 정보 확인이 완료되었습니다!");
-      setShowInfoModal(false);
-      setCurrentStep(1); // 다음 모달 열기를 위해 초기화
-    }, 2000);
   };
-
-  const handleShowInfoModal = () => {
-    setCurrentStep(1); // 모달 열 때 첫 번째 단계로 초기화
-    setShowInfoModal(true);
-  };
-
-  const handleHideInfoModal = () => {
-    setShowInfoModal(false);
-    setCurrentStep(1); // 모달 닫을 때 초기화
-    setValidationErrors({}); // 유효성 검사 오류 초기화
-  };
-
-  // 실시간 유효성 검사
-  const validateField = (field, value) => {
-    const errors = { ...validationErrors };
-
-    switch (field) {
-      case "studentId":
-        if (!value) {
-          errors.studentId = "학번을 입력해주세요";
-        } else if (value === "202345603") {
-          // 관리자 모드용 특별 처리
-          delete errors.studentId;
-        } else if (!/^\d{9}$/.test(value)) {
-          errors.studentId = "학번은 9자리 숫자여야 합니다";
-        } else {
-          delete errors.studentId;
-        }
-        break;
-      case "studentName":
-        if (!value) {
-          errors.studentName = "이름을 입력해주세요";
-        } else if (value.length < 2) {
-          errors.studentName = "이름은 2자 이상 입력해주세요";
-        } else {
-          delete errors.studentName;
-        }
-        break;
-      case "authNumber":
-        if (!value) {
-          errors.authNumber = "인증번호를 입력해주세요";
-        } else if (!/^\d+$/.test(value)) {
-          errors.authNumber = "인증번호는 숫자만 입력 가능합니다";
-        } else if (value.length < 4) {
-          errors.authNumber = "인증번호는 최소 4자리 이상 입력해주세요";
-        } else {
-          delete errors.authNumber;
-        }
-        break;
-      default:
-        // 알 수 없는 필드에 대한 기본 처리
-        break;
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const formatDate = (dateStr) =>
-    dateStr ? dateStr.substring(5).replace("-", "/") : "";
-
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => setSelectedDate(tomorrowStr),
-    onSwipedRight: () => setSelectedDate(todayStr),
-    preventScrollOnSwipe: true,
-    trackMouse: true,
-  });
 
   return (
-    <div className={`container p-0 p-sm-4 ${isAdminMode ? "admin-mode" : ""}`}>
-      <main>
-        <div className="app-header">
-          <div className="header-content">
-            <div className="header-logo">
-              <span className="logo-icon">🔬</span>
-              <div className="header-text">
-                <h1 className="header-title">BAF</h1>
-                <p className="header-subtitle">연구실 체험 예약 시스템</p>
+    <div className="app-main-wrapper bg-light min-vh-100 d-flex flex-column">
+      <ToastContainer transition={Slide} position="top-right" autoClose={3000} />
+
+      {/* Top Navbar */}
+      <nav className="navbar navbar-expand bg-white border-bottom sticky-top py-2 px-3 shadow-xs">
+        <div className="container-fluid max-w-7xl px-0 d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center gap-2">
+            <span className="fs-4">🏛️</span>
+            <div>
+              <h1 className="h6 fw-bold mb-0 text-dark">
+                {settings.event_title || "연구실 체험부스 실시간 예약 시스템"}
+              </h1>
+              <small className="text-muted d-none d-sm-inline">
+                실시간 동기화 예약 체계 v2.0
+              </small>
+            </div>
+          </div>
+
+          <div className="d-flex align-items-center gap-2">
+            {/* Admin shortcut button */}
+            <Button
+              variant="outline-dark"
+              size="sm"
+              className="d-flex align-items-center gap-1 rounded-pill px-3"
+              onClick={() => setShowAdminModal(true)}
+            >
+              <span>⚙️</span>
+              <span className="d-none d-sm-inline">관리자</span>
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Container */}
+      <div className="container-fluid max-w-7xl py-3 py-md-4 flex-grow-1">
+        <div className="row g-3 g-lg-4">
+          
+          {/* LEFT SIDEBAR / TOP CONTROLS (PC: 4 cols, Mobile/Tablet: full width) */}
+          <div className="col-12 col-lg-4 col-xl-3">
+            {/* User Info Form Box */}
+            <div className="bg-white p-3 rounded shadow-sm border mb-3">
+              <h6 className="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
+                <span>👤 예약자 정보 입력</span>
+              </h6>
+              <Form>
+                <Form.Group className="mb-2">
+                  <Form.Label className="small text-muted mb-1">학번 (예: 202612345)</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="9자리 학번 입력"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value.trim())}
+                    maxLength={15}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-2">
+                  <Form.Label className="small text-muted mb-1">성함</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="이름 입력"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label className="small text-muted mb-1">취소용 비밀번호 (4자리 이상)</Form.Label>
+                  <Form.Control
+                    type="password"
+                    placeholder="비밀번호 설정"
+                    value={authNumber}
+                    onChange={(e) => setAuthNumber(e.target.value)}
+                  />
+                </Form.Group>
+              </Form>
+            </div>
+
+            {/* Date Selector Tabs */}
+            <div className="bg-white p-3 rounded shadow-sm border mb-3">
+              <h6 className="fw-bold mb-2 text-dark">📅 행사 날짜 선택</h6>
+              <div className="d-flex flex-wrap gap-2">
+                {settings.event_dates?.map((dateStr) => {
+                  const isSelected = selectedDate === dateStr;
+                  return (
+                    <button
+                      key={dateStr}
+                      type="button"
+                      className={`btn flex-grow-1 text-center py-2 ${
+                        isSelected ? "btn-primary fw-bold" : "btn-outline-secondary"
+                      }`}
+                      onClick={() => setSelectedDate(dateStr)}
+                    >
+                      {dateStr}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Booth Selector List */}
+            <div className="bg-white p-3 rounded shadow-sm border mb-3 d-none d-lg-block">
+              <LabsList
+                booths={booths}
+                selectedLab={selectedLab}
+                onLabSelect={(labName) => setSelectedLab(labName)}
+              />
+            </div>
+
+            {/* My Reservations List Panel */}
+            <MyReservations
+              studentId={studentId}
+              reservationsByDate={{ [selectedDate]: reservations }}
+              currentReservationCount={currentReservationCount}
+              maxReservationsPerStudent={settings.max_reservations_per_student || 2}
+              onReservationClick={handleMyReservationClick}
+            />
+          </div>
+
+          {/* RIGHT MAIN PANEL (PC: 8-9 cols, Mobile/Tablet: full width) */}
+          <div className="col-12 col-lg-8 col-xl-9">
+            {/* Booth Selector Pill Tabs for Mobile & Tablet */}
+            <div className="bg-white p-3 rounded shadow-sm border mb-3 d-lg-none">
+              <LabsList
+                booths={booths}
+                selectedLab={selectedLab}
+                onLabSelect={(labName) => setSelectedLab(labName)}
+              />
+            </div>
+
+            {/* Timetable View */}
+            <div className="bg-white rounded shadow-sm border p-2 p-md-3">
+              <Timetable
+                studentId={studentId}
+                selectedLab={selectedLab}
+                selectedDate={selectedDate}
+                reservations={reservations.filter(
+                  (r) => r.booth_id === selectedLab && r.date === selectedDate
+                )}
+                currentReservationCount={currentReservationCount}
+                maxReservationsPerStudent={settings.max_reservations_per_student || 2}
+                maxCapacityPerSlot={settings.max_capacity_per_slot || 2}
+                timeSlots={timeSlots}
+                slotBlocks={slotBlocks}
+                onCardClick={handleTimeSlotClick}
+                isAdminMode={false}
+              />
+            </div>
           </div>
         </div>
-        <div className="usage-guide">
-          <div className="guide-content">
-            <div className="guide-item">
-              <span className="guide-icon">✏️</span>
-              <span className="guide-text">정보 입력</span>
-            </div>
-            <div className="guide-divider">→</div>
-            <div className="guide-item">
-              <span className="guide-icon">📅</span>
-              <span className="guide-text">날짜 선택</span>
-            </div>
-            <div className="guide-divider">→</div>
-            <div className="guide-item">
-              <span className="guide-icon">📋</span>
-              <span className="guide-text">연구실 선택</span>
-            </div>
-            <div className="guide-divider">→</div>
-            <div className="guide-item">
-              <span className="guide-icon">⏰</span>
-              <span className="guide-text">시간 예약</span>
-            </div>
-          </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-white border-top py-3 text-center text-muted small mt-auto">
+        <div className="container max-w-7xl">
+          <p className="mb-0">
+            {settings.event_title || "연구실 체험부스 실시간 예약 시스템"} © 2026. All Rights Reserved.
+          </p>
         </div>
-        <div className="lab-filter-header">
-          <LabsList selectedLab={selectedLab} onLabSelect={setSelectedLab} />
-        </div>
-        <div {...swipeHandlers}>
-          <Timetable
-            key={selectedDate}
-            studentId={isAdminMode ? "admin" : studentId}
-            selectedLab={selectedLab}
-            reservations={
-              selectedDate === todayStr
-                ? reservationsByDate.today.filter(
-                    (r) => r.lab_id === selectedLab
-                  )
-                : reservationsByDate.tomorrow.filter(
-                    (r) => r.lab_id === selectedLab
-                  )
-            }
-            currentReservationCount={currentReservationCount}
-            onCardClick={handleTimeSlotClick}
-            isAdminMode={isAdminMode}
-          />
-        </div>
+      </footer>
 
-        <button
-          className={`fab-left ${
-            dateToggleAnimation ? "date-toggle-animation" : ""
-          }`}
-          onClick={handleDateToggle}
-        >
-          <span className="fab-date">{formatDate(selectedDate)}</span>
-        </button>
+      {/* ADMIN MODAL */}
+      <AdminModal
+        show={showAdminModal}
+        onHide={() => setShowAdminModal(false)}
+        settings={settings}
+        booths={booths}
+        reservations={reservations}
+        slotBlocks={slotBlocks}
+        onUpdateSettings={(newSet) => setSettings(newSet)}
+        onUpdateBooths={(newBooths) => setBooths(newBooths)}
+        onRefreshData={handleRefreshAll}
+      />
 
-        <OverlayTrigger
-          placement="left"
-          overlay={<Tooltip>정보 및 설정</Tooltip>}
-        >
-          <button className="fab" onClick={handleShowInfoModal}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
-            </svg>
-          </button>
-        </OverlayTrigger>
+      {/* USER INFO PROMPT MODAL */}
+      <Modal show={showInfoModal} onHide={() => setShowInfoModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="h6 fw-bold">안내</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center py-4">
+          <p className="mb-3">예약을 진행하려면 먼저 학번과 성함, 취소용 비밀번호를 입력해야 합니다.</p>
+          <Button variant="primary" onClick={() => setShowInfoModal(false)}>
+            확인 및 정보 입력하기
+          </Button>
+        </Modal.Body>
+      </Modal>
 
-        <InfoModal
-          show={showInfoModal}
-          onHide={handleHideInfoModal}
-          onConfirm={handleConfirmInfo}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          validationErrors={validationErrors}
-          validateField={validateField}
-          {...{
-            studentId,
-            setStudentId,
-            studentName,
-            setStudentName,
-            authNumber,
-            setAuthNumber,
-            reservationsByDate,
-            currentReservationCount,
-            handleMyReservationClick,
-            todayStr,
-          }}
-        />
-
-        <ReservationModal
-          show={showReservationModal}
-          onHide={() => setShowReservationModal(false)}
-          context={modalContext}
-          loading={loading}
-          onConfirm={handleConfirmReservation}
-          onCancel={handleCancelReservation}
-          dialogClassName="info-modal"
-          isAdminMode={isAdminMode}
-          onAdminCancel={handleAdminCancelReservation}
-          cancellingReservationId={cancellingReservationId}
-        />
-
-        <ToastContainer
-          position="bottom-center"
-          autoClose={2000}
-          hideProgressBar
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss={false}
-          draggable={false}
-          pauseOnHover
-          theme="colored"
-          transition={Slide}
-        />
-
-        {isAdminMode && (
-          <div className="admin-mode-indicator">
-            <div className="admin-indicator-content">
-              <span className="admin-icon">👑</span>
-              <span className="admin-text">관리자 모드</span>
+      {/* RESERVATION CONFIRM / CANCEL MODAL */}
+      <Modal
+        show={showReservationModal}
+        onHide={() => setShowReservationModal(false)}
+        centered
+        className="reservation-action-modal"
+      >
+        <Modal.Header closeButton className="border-bottom-0">
+          <Modal.Title className="h6 fw-bold">
+            {modalContext?.type === "cancel" ? "예약 취소 확인" : "예약 신청 확인"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="py-3">
+          {modalContext?.type === "confirm" ? (
+            <div className="text-center">
+              <div className="fs-1 mb-2">📌</div>
+              <h5 className="fw-bold mb-3">{modalContext.lab}</h5>
+              <div className="bg-light p-3 rounded mb-3 text-start">
+                <p className="mb-1"><strong>예약 날짜:</strong> {modalContext.date}</p>
+                <p className="mb-1"><strong>시간대:</strong> {modalContext.timeSlot}</p>
+                <p className="mb-0"><strong>신청자:</strong> {studentName} ({studentId})</p>
+              </div>
+              <p className="small text-muted">위 정보로 예약을 확정하시겠습니까?</p>
             </div>
-          </div>
-        )}
-      </main>
+          ) : (
+            <div className="text-center">
+              <div className="fs-1 mb-2">🗑️</div>
+              <h5 className="fw-bold mb-3">예약을 취소하시겠습니까?</h5>
+              <div className="bg-light p-3 rounded mb-3 text-start">
+                <p className="mb-1"><strong>부스:</strong> {modalContext?.lab}</p>
+                <p className="mb-1"><strong>날짜:</strong> {modalContext?.date}</p>
+                <p className="mb-0"><strong>시간대:</strong> {modalContext?.timeSlot}</p>
+              </div>
+              <p className="small text-danger">취소 후 다시 해당 슬롯을 예약해야 합니다.</p>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="border-top-0">
+          <Button variant="secondary" onClick={() => setShowReservationModal(false)} disabled={loading}>
+            창 닫기
+          </Button>
+          {modalContext?.type === "confirm" ? (
+            <Button variant="primary" onClick={handleConfirmReservation} disabled={loading}>
+              {loading ? <Spinner animation="border" size="sm" /> : "예약 확정"}
+            </Button>
+          ) : (
+            <Button variant="danger" onClick={handleConfirmCancel} disabled={loading}>
+              {loading ? <Spinner animation="border" size="sm" /> : "취소 실행"}
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
-
-// Helper: Info Modal
-const InfoModal = (props) => {
-  const {
-    show,
-    onHide,
-    onConfirm,
-    currentStep,
-    setCurrentStep,
-    validationErrors,
-    validateField,
-    studentId,
-    setStudentId,
-    studentName,
-    setStudentName,
-    authNumber,
-    setAuthNumber,
-    reservationsByDate,
-    currentReservationCount,
-    handleMyReservationClick,
-    todayStr,
-  } = props;
-  return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      centered
-      scrollable
-      dialogClassName="info-modal"
-    >
-      <Modal.Header closeButton>
-        <Modal.Title as="h5">정보 및 설정</Modal.Title>
-      </Modal.Header>
-
-      {/* 스텝 바 */}
-      <div className="modal-step-bar">
-        <div className="step-indicator">
-          <div
-            className={`step ${currentStep >= 1 ? "active" : ""} ${
-              currentStep > 1 ? "completed" : ""
-            }`}
-          >
-            <div className="step-number">1</div>
-            <div className="step-label">정보입력</div>
-          </div>
-          <div
-            className={`step-connector ${currentStep > 1 ? "completed" : ""}`}
-          ></div>
-          <div
-            className={`step ${currentStep >= 2 ? "active" : ""} ${
-              currentStep > 2 ? "completed" : ""
-            }`}
-          >
-            <div className="step-number">2</div>
-            <div className="step-label">확인</div>
-          </div>
-          <div
-            className={`step-connector ${currentStep > 2 ? "completed" : ""}`}
-          ></div>
-          <div className={`step ${currentStep >= 3 ? "active" : ""}`}>
-            <div className="step-number">3</div>
-            <div className="step-label">완료</div>
-          </div>
-        </div>
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
-          ></div>
-        </div>
-        {/* 현재 단계 안내 */}
-        <div className="step-guidance">
-          {currentStep === 1 && (
-            <div className="guidance-text">
-              <span className="guidance-icon">📝</span>
-              예약자 정보를 입력해주세요
-            </div>
-          )}
-          {currentStep === 2 && (
-            <div className="guidance-text">
-              <span className="guidance-icon">👀</span>
-              입력하신 정보를 확인해주세요
-            </div>
-          )}
-          {currentStep === 3 && (
-            <div className="guidance-text">
-              <span className="guidance-icon">✅</span>
-              정보 확인이 완료되었습니다
-            </div>
-          )}
-        </div>
-      </div>
-
-      <Modal.Body>
-        {/* 스텝 1: 정보 입력 */}
-        {currentStep === 1 && (
-          <>
-            <div className="text-center mb-3">
-              <img
-                src="/baf-logo.png"
-                alt="BAF Logo"
-                className="img-fluid"
-                style={{ maxWidth: "120px" }}
-              />
-            </div>
-            <MyReservations
-              studentId={studentId}
-              reservationsByDate={reservationsByDate}
-              currentReservationCount={currentReservationCount}
-              onReservationClick={handleMyReservationClick}
-              todayStr={todayStr}
-            />
-            <div className="card p-2 my-2">
-              <h5 className="card-title mb-2">예약자 정보</h5>
-              <div className="row g-2 mb-2">
-                <div className="col-6">
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={
-                      <Tooltip>학번을 입력해주세요 (예: 202412345)</Tooltip>
-                    }
-                  >
-                    <label className="form-label small">학번</label>
-                  </OverlayTrigger>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className={`form-control ${
-                      validationErrors.studentId ? "is-invalid" : ""
-                    }`}
-                    value={studentId}
-                    onChange={(e) => {
-                      const newStudentId = e.target.value;
-                      setStudentId(newStudentId);
-                      validateField("studentId", newStudentId);
-                    }}
-                    placeholder="학번"
-                  />
-                  {validationErrors.studentId && (
-                    <div className="invalid-feedback">
-                      {validationErrors.studentId}
-                    </div>
-                  )}
-                </div>
-                <div className="col-6">
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={<Tooltip>본인의 이름을 입력해주세요</Tooltip>}
-                  >
-                    <label className="form-label small">이름</label>
-                  </OverlayTrigger>
-                  <input
-                    type="text"
-                    className={`form-control ${
-                      validationErrors.studentName ? "is-invalid" : ""
-                    }`}
-                    value={studentName}
-                    onChange={(e) => {
-                      setStudentName(e.target.value);
-                      validateField("studentName", e.target.value);
-                    }}
-                    placeholder="이름"
-                  />
-                  {validationErrors.studentName && (
-                    <div className="invalid-feedback">
-                      {validationErrors.studentName}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <OverlayTrigger
-                  placement="top"
-                  overlay={
-                    <Tooltip>인증번호를 입력해주세요 (최소 4자리 이상)</Tooltip>
-                  }
-                >
-                  <label className="form-label small">인증번호</label>
-                </OverlayTrigger>
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  className={`form-control ${
-                    validationErrors.authNumber ? "is-invalid" : ""
-                  }`}
-                  value={authNumber}
-                  onChange={(e) => {
-                    const newAuthNumber = e.target.value;
-                    setAuthNumber(newAuthNumber);
-                    validateField("authNumber", newAuthNumber);
-                  }}
-                  placeholder="4자리"
-                />
-                {validationErrors.authNumber && (
-                  <div className="invalid-feedback">
-                    {validationErrors.authNumber}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* 스텝 2: 확인 */}
-        {currentStep === 2 && (
-          <div className="text-center">
-            <div className="mb-4">
-              <div className="check-icon">✓</div>
-              <h5>입력 정보 확인</h5>
-              <p className="text-muted">입력하신 정보가 맞는지 확인해주세요.</p>
-            </div>
-            <div className="card p-3">
-              <div className="row g-2">
-                <div className="col-4">
-                  <strong>학번:</strong>
-                </div>
-                <div className="col-8">{studentId || "미입력"}</div>
-                <div className="col-4">
-                  <strong>이름:</strong>
-                </div>
-                <div className="col-8">{studentName || "미입력"}</div>
-                <div className="col-4">
-                  <strong>인증번호:</strong>
-                </div>
-                <div className="col-8">{authNumber ? "●●●●" : "미입력"}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 스텝 3: 완료 */}
-        {currentStep === 3 && (
-          <div className="text-center">
-            <div className="mb-4">
-              <div className="success-icon">🎉</div>
-              <h5>확인 완료!</h5>
-              <p className="text-muted">정보가 성공적으로 확인되었습니다.</p>
-            </div>
-          </div>
-        )}
-      </Modal.Body>
-      <Modal.Footer>
-        {currentStep === 1 && (
-          <>
-            <Button
-              variant="primary"
-              onClick={() => setCurrentStep(2)}
-              className="me-2"
-              disabled={
-                Object.keys(validationErrors).length > 0 ||
-                !studentId ||
-                !studentName ||
-                !authNumber
-              }
-            >
-              다음 단계
-            </Button>
-            <Button variant="secondary" onClick={onHide}>
-              닫기
-            </Button>
-          </>
-        )}
-        {currentStep === 2 && (
-          <>
-            <Button variant="success" onClick={onConfirm} className="me-2">
-              확인 완료
-            </Button>
-            <Button
-              variant="outline-secondary"
-              onClick={() => setCurrentStep(1)}
-              className="me-2"
-            >
-              이전
-            </Button>
-            <Button variant="secondary" onClick={onHide}>
-              닫기
-            </Button>
-          </>
-        )}
-        {currentStep === 3 && (
-          <Button variant="secondary" onClick={onHide} className="w-100">
-            닫기
-          </Button>
-        )}
-      </Modal.Footer>
-    </Modal>
-  );
-};
-
-// Helper: Reservation Action Modal
-const ReservationModal = ({
-  show,
-  onHide,
-  context,
-  loading,
-  onConfirm,
-  onCancel,
-  isAdminMode = false,
-  onAdminCancel,
-  cancellingReservationId,
-}) => {
-  if (!context) return null;
-  const { type, timeSlot, lab, reservationsForSlot } = context;
-  const isMyReservation = type === "cancel";
-  const isFull =
-    !isMyReservation &&
-    reservationsForSlot &&
-    reservationsForSlot.length >= MAX_RESERVATIONS_PER_SLOT;
-  let title = `${lab} - ${timeSlot.split(" ")[0]}`;
-  let body = null;
-  let footer = null;
-
-  const formatReservationDisplay = (r) =>
-    `${r.student_id || ""} ${r.student_name || ""}`.trim();
-
-  const bookedBy = reservationsForSlot && reservationsForSlot.length > 0 && (
-    <div className="mt-3">
-      <small className="text-muted">현재 예약자:</small>
-      <ul className="list-unstyled mt-1 small">
-        {reservationsForSlot.map((r) => (
-          <li key={r.id}>- {formatReservationDisplay(r)}</li>
-        ))}
-      </ul>
-    </div>
-  );
-
-  // 관리자 모드에서 예약이 있는 경우
-  if (isAdminMode && reservationsForSlot && reservationsForSlot.length > 0) {
-    title = `관리자 모드 - ${lab} - ${timeSlot.split(" ")[0]}`;
-    body = (
-      <div>
-        <p className="text-primary fw-bold mb-3">
-          <span className="badge bg-primary">관리자</span> 예약 관리
-        </p>
-        <div className="alert alert-info">
-          현재 예약 목록입니다. 취소할 예약을 선택하세요.
-        </div>
-        <div className="list-group">
-          {reservationsForSlot.map((r) => (
-            <div
-              key={r.id}
-              className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-            >
-              <div>
-                <strong>{r.student_name}</strong>
-                <br />
-                <small className="text-muted">학번: {r.student_id}</small>
-              </div>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => onAdminCancel(r.id)}
-                disabled={cancellingReservationId === r.id}
-              >
-                {cancellingReservationId === r.id ? (
-                  <>
-                    <Spinner
-                      as="span"
-                      animation="border"
-                      size="sm"
-                      className="me-1"
-                    />
-                    취소 중...
-                  </>
-                ) : (
-                  "예약 취소"
-                )}
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-    footer = (
-      <Button variant="secondary" onClick={onHide} disabled={loading}>
-        닫기
-      </Button>
-    );
-
-    return (
-      <Modal show={show} onHide={onHide} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>{body}</Modal.Body>
-        <Modal.Footer>{footer}</Modal.Footer>
-      </Modal>
-    );
-  }
-
-  if (isMyReservation) {
-    title = "예약 취소";
-    body = (
-      <p>
-        <strong>
-          {lab} - {timeSlot.split(" ")[0]}
-        </strong>{" "}
-        예약을 취소하시겠습니까?
-      </p>
-    );
-    footer = (
-      <>
-        <Button variant="secondary" onClick={onHide} disabled={loading}>
-          닫기
-        </Button>
-        <Button variant="danger" onClick={onCancel} disabled={loading}>
-          {loading ? <Spinner size="sm" /> : "예약 취소"}
-        </Button>
-      </>
-    );
-  } else if (isFull) {
-    title = "예약 마감";
-    body = (
-      <>
-        <p>이 시간대는 예약이 모두 마감되었습니다.</p>
-        {bookedBy}
-      </>
-    );
-    footer = (
-      <Button variant="secondary" onClick={onHide}>
-        닫기
-      </Button>
-    );
-  } else {
-    title = "새 예약";
-    body = (
-      <>
-        <p>
-          <strong>
-            {lab} - {timeSlot.split(" ")[0]}
-          </strong>
-          에 예약하시겠습니까?
-        </p>
-        {bookedBy}
-      </>
-    );
-    footer = (
-      <>
-        <Button variant="secondary" onClick={onHide} disabled={loading}>
-          닫기
-        </Button>
-        <Button variant="primary" onClick={onConfirm} disabled={loading}>
-          {loading ? <Spinner size="sm" /> : "예약하기"}
-        </Button>
-      </>
-    );
-  }
-
-  return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      centered
-      backdrop={loading ? "static" : true}
-    >
-      <Modal.Header closeButton>
-        <Modal.Title as="h5">{title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>{body}</Modal.Body>
-      <Modal.Footer>{footer}</Modal.Footer>
-    </Modal>
-  );
-};
 
 export default App;
