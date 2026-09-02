@@ -251,8 +251,9 @@ function App() {
 
     try {
       const userResCount = reservations.filter((r) => r.student_id === studentId).length;
-      if (userResCount >= (settings.max_reservations_per_student || 2)) {
-        toast.error(`1인당 최대 ${settings.max_reservations_per_student || 2}회까지만 예약 가능합니다.`);
+      const maxReservationsLimit = Number(settings.max_reservations_per_student) || 2;
+      if (userResCount >= maxReservationsLimit) {
+        toast.error(`1인당 최대 ${maxReservationsLimit}회까지만 예약 가능합니다.`);
         setLoading(false);
         setShowReservationModal(false);
         return;
@@ -265,7 +266,7 @@ function App() {
           r.time_slot === modalContext.timeSlot
       ).length;
 
-      const slotCapacityLimit = settings.max_capacity_per_slot || 1;
+      const slotCapacityLimit = Number(settings.max_capacity_per_slot) || 1;
       if (slotResCount >= slotCapacityLimit) {
         toast.error("해당 시간대는 이미 정원이 마감되었습니다.");
         setLoading(false);
@@ -454,8 +455,8 @@ function App() {
                     (r) => r.booth_id === selectedLab && r.date === selectedDate
                   )}
                   currentReservationCount={currentReservationCount}
-                  maxReservationsPerStudent={settings.max_reservations_per_student || 2}
-                  maxCapacityPerSlot={settings.max_capacity_per_slot || 1}
+                  maxReservationsPerStudent={Number(settings.max_reservations_per_student) || 2}
+                  maxCapacityPerSlot={Number(settings.max_capacity_per_slot) || 1}
                   timeSlots={timeSlots}
                   slotBlocks={slotBlocks}
                   onCardClick={handleTimeSlotClick}
@@ -494,7 +495,7 @@ function App() {
                 studentId={studentId}
                 reservationsByDate={{ [selectedDate]: reservations }}
                 currentReservationCount={currentReservationCount}
-                maxReservationsPerStudent={settings.max_reservations_per_student || 2}
+                maxReservationsPerStudent={Number(settings.max_reservations_per_student) || 2}
                 onReservationClick={handleMyReservationClick}
               />
             </div>
@@ -563,8 +564,8 @@ function App() {
                     (r) => r.booth_id === selectedLab && r.date === selectedDate
                   )}
                   currentReservationCount={currentReservationCount}
-                  maxReservationsPerStudent={settings.max_reservations_per_student || 2}
-                  maxCapacityPerSlot={settings.max_capacity_per_slot || 1}
+                  maxReservationsPerStudent={Number(settings.max_reservations_per_student) || 2}
+                  maxCapacityPerSlot={Number(settings.max_capacity_per_slot) || 1}
                   timeSlots={timeSlots}
                   slotBlocks={slotBlocks}
                   onCardClick={handleTimeSlotClick}
@@ -650,7 +651,7 @@ function App() {
                 studentId={studentId}
                 reservationsByDate={{ [selectedDate]: reservations }}
                 currentReservationCount={currentReservationCount}
-                maxReservationsPerStudent={settings.max_reservations_per_student || 2}
+                maxReservationsPerStudent={Number(settings.max_reservations_per_student) || 2}
                 onReservationClick={handleMyReservationClick}
               />
             </div>

@@ -19,7 +19,7 @@ const Timetable = ({
   studentId,
   selectedLab,
   selectedDate,
-  selectedBoothDesc, // Admin-configured booth description text
+  selectedBoothDesc,
   reservations = [],
   currentReservationCount = 0,
   maxReservationsPerStudent = 2,
@@ -29,6 +29,10 @@ const Timetable = ({
   onCardClick,
   isAdminMode = false,
 }) => {
+  // Safe Number Casting to guarantee exact numeric comparisons
+  const maxCapacity = Number(maxCapacityPerSlot) || 1;
+  const maxReservations = Number(maxReservationsPerStudent) || 2;
+
   const handleCardClick = (timeSlot, isBlocked, reservationsForSlot) => {
     if (isBlocked && !isAdminMode) {
       toast.warning("해당 시간대는 현재 예약이 차단되어 있습니다.");
@@ -40,11 +44,11 @@ const Timetable = ({
     );
 
     if (
-      currentReservationCount >= maxReservationsPerStudent &&
+      currentReservationCount >= maxReservations &&
       !isMyReservation &&
       !isAdminMode
     ) {
-      toast.warning(`최대 예약 가능 횟수(${maxReservationsPerStudent}회)에 도달하였습니다.`);
+      toast.warning(`최대 예약 가능 횟수(${maxReservations}회)에 도달하였습니다.`);
       return;
     }
 
@@ -58,11 +62,11 @@ const Timetable = ({
     );
     if (isMyReservation) return "mine";
     if (
-      currentReservationCount >= maxReservationsPerStudent &&
+      currentReservationCount >= maxReservations &&
       !isMyReservation
     )
       return "disabled";
-    if (reservationsForSlot.length >= maxCapacityPerSlot) return "full";
+    if (reservationsForSlot.length >= maxCapacity) return "full";
     if (reservationsForSlot.length > 0) return "partially";
     return "available";
   };
@@ -126,7 +130,7 @@ const Timetable = ({
                       {timeSlot}
                     </span>
                     <div className="d-flex gap-1 align-items-center">
-                      {Array.from({ length: maxCapacityPerSlot }).map((_, i) => {
+                      {Array.from({ length: maxCapacity }).map((_, i) => {
                         const reservation = reservationsForSlot[i];
                         const isUserMine =
                           reservation && reservation.student_id === studentId;
@@ -142,7 +146,7 @@ const Timetable = ({
                   </div>
 
                   <div className="d-flex justify-content-between align-items-center mt-2">
-                    {getStatusBadge(status, reservationsForSlot.length, maxCapacityPerSlot)}
+                    {getStatusBadge(status, reservationsForSlot.length, maxCapacity)}
                   </div>
 
                   {isAdminMode && reservationsForSlot.length > 0 && (
