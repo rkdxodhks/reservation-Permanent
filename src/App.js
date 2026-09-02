@@ -329,14 +329,12 @@ function App() {
             </div>
 
             <div>
-              <div className="d-flex align-items-center gap-2">
-                <span className="pill-tag font-mono">
-                  PNU BioMaterial Science
-                </span>
-                <h1 className="h6 fw-semibold mb-0 text-slate-900 brand-title">
-                  {settings.event_title || "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템"}
-                </h1>
-              </div>
+              <h1 className="h6 fw-semibold mb-0 text-slate-900 brand-title d-none d-sm-block">
+                {settings.event_title || "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템"}
+              </h1>
+              <p className="mb-0 text-slate-600 small d-sm-none fw-medium">
+                BAF 체험부스 예약
+              </p>
             </div>
           </div>
 

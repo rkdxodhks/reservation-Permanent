@@ -301,10 +301,24 @@ export const AdminModal = ({
                     <Form.Label className="form-label-taste">행사 운영 날짜</Form.Label>
                     <div className="d-flex flex-wrap gap-2 mb-2">
                       {formSettings.event_dates?.map((d) => (
-                        <span key={d} className="badge bg-slate-100 text-slate-800 border p-2 fs-6 d-flex align-items-center gap-2">
+                        <span
+                          key={d}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            background: "#f1f5f9",
+                            color: "#1e293b",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            padding: "0.35rem 0.65rem",
+                            fontSize: "0.875rem",
+                            fontWeight: 500,
+                          }}
+                        >
                           {d}
                           <span
-                            style={{ cursor: "pointer", color: "#ef4444" }}
+                            style={{ cursor: "pointer", color: "#ef4444", fontWeight: 700 }}
                             onClick={() => handleRemoveDate(d)}
                           >
                             ×
@@ -614,9 +628,22 @@ export const AdminModal = ({
                           <td className="fw-medium font-mono">{r.student_id}</td>
                           <td>{r.student_name}</td>
                           <td>{r.auth_number}</td>
-                          <td>
-                            <Badge bg="light" className="text-slate-800 border">{r.booth_id}</Badge>
-                          </td>
+                           <td>
+                             <span
+                               style={{
+                                 display: "inline-block",
+                                 background: "#f1f5f9",
+                                 color: "#1e293b",
+                                 border: "1px solid #e2e8f0",
+                                 borderRadius: "4px",
+                                 fontSize: "0.75rem",
+                                 padding: "0.2rem 0.5rem",
+                                 fontWeight: 500,
+                               }}
+                             >
+                               {r.booth_id}
+                             </span>
+                           </td>
                           <td>{r.date}</td>
                           <td>{r.time_slot}</td>
                           <td>
