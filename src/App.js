@@ -1,4 +1,4 @@
-// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with admin-configured booth description text in Timetable header and comfortable header spacing.
+// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with Apple Liquid Glass mobile floating bar and responsive 3-column desktop layout.
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LabsList, MyReservations } from "./StatusPanel";
@@ -39,6 +39,30 @@ const CalendarIcon = () => (
   </svg>
 );
 
+// Liquid Glass Mobile Dock Icons
+const TimetableTabIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
+  </svg>
+);
+
+const ProfileTabIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const TicketTabIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+  </svg>
+);
+
 function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [booths, setBooths] = useState(DEFAULT_BOOTHS);
@@ -50,6 +74,9 @@ function App() {
   const [authNumber, setAuthNumber] = useState("");
   const [selectedLab, setSelectedLab] = useState(DEFAULT_BOOTHS[0].name);
   const [selectedDate, setSelectedDate] = useState(DEFAULT_SETTINGS.event_dates[0]);
+
+  // Mobile Active Tab State: "timetable" | "info" | "my"
+  const [mobileTab, setMobileTab] = useState("timetable");
 
   const [cancelAuthPassword, setCancelAuthPassword] = useState("");
 
@@ -183,7 +210,6 @@ function App() {
     settings.slot_interval || 20
   );
 
-  // Find description of currently selected booth
   const selectedBoothObj = booths.find((b) => b.name === selectedLab);
 
   const handleTimeSlotClick = (timeSlot, reservationsForSlot) => {
@@ -310,7 +336,7 @@ function App() {
     <div className="app-main-wrapper bg-slate min-vh-100 d-flex flex-column">
       <ToastContainer transition={Slide} position="top-right" autoClose={3000} />
 
-      {/* HEADER BAR (Comfortable Spacing py-3 px-4) */}
+      {/* HEADER BAR */}
       <header className="taste-header sticky-top border-bottom py-3">
         <div className="container-fluid max-w-7xl px-3 px-md-4 d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-3">
@@ -332,8 +358,8 @@ function App() {
               <h1 className="h6 fw-semibold mb-0 text-slate-900 brand-title d-none d-sm-block">
                 {settings.event_title || "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템"}
               </h1>
-              <p className="mb-0 text-slate-600 small d-sm-none fw-medium">
-                BAF 체험부스 예약
+              <p className="mb-0 text-slate-800 small d-sm-none fw-semibold">
+                BAF 체험부스 실시간 예약
               </p>
             </div>
           </div>
@@ -350,133 +376,287 @@ function App() {
         </div>
       </header>
 
-      {/* MAIN CONTENT: 3-COLUMN LAYOUT */}
-      <main className="container-fluid max-w-7xl py-4 flex-grow-1">
-        <div className="row g-4">
-          
-          {/* LEFT COLUMN */}
-          <div className="col-12 col-lg-3">
-            <div className="taste-card p-4 mb-3">
-              <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                <h6 className="fw-semibold mb-0 text-slate-900 d-flex align-items-center gap-2">
-                  <UserIcon />
-                  <span>예약자 정보</span>
-                </h6>
-                <small className="text-slate-400 fs-7">필수 입력</small>
+      {/* MAIN CONTENT AREA */}
+      <main className="container-fluid max-w-7xl py-4 flex-grow-1 app-main-content-mobile">
+        
+        {/* ========================================================
+            DESKTOP VIEW (≥ 992px): Classic 3-Column Grid
+           ======================================================== */}
+        <div className="d-none d-lg-block">
+          <div className="row g-4">
+            
+            {/* LEFT COLUMN: Student Info & Booth List */}
+            <div className="col-lg-3">
+              <div className="taste-card p-4 mb-3">
+                <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                  <h6 className="fw-semibold mb-0 text-slate-900 d-flex align-items-center gap-2">
+                    <UserIcon />
+                    <span>예약자 정보</span>
+                  </h6>
+                  <small className="text-slate-400 fs-7">필수 입력</small>
+                </div>
+
+                <Form>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="form-label-taste">학번</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="예: 202345603"
+                      value={studentId}
+                      onChange={(e) => setStudentId(e.target.value.trim())}
+                      maxLength={15}
+                      className="form-control-taste"
+                    />
+                  </Form.Group>
+
+                  <Form.Group className="mb-3">
+                    <Form.Label className="form-label-taste">성함</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="성함 입력"
+                      value={studentName}
+                      onChange={(e) => setStudentName(e.target.value)}
+                      className="form-control-taste"
+                    />
+                  </Form.Group>
+
+                  <Form.Group className="mb-2">
+                    <Form.Label className="form-label-taste">취소용 비밀번호</Form.Label>
+                    <Form.Control
+                      type="password"
+                      placeholder="4자리 이상 설정"
+                      value={authNumber}
+                      onChange={(e) => setAuthNumber(e.target.value)}
+                      className="form-control-taste"
+                    />
+                  </Form.Group>
+                </Form>
               </div>
 
-              <Form>
-                <Form.Group className="mb-3">
-                  <Form.Label className="form-label-taste">학번</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="예: 202345603"
-                    value={studentId}
-                    onChange={(e) => setStudentId(e.target.value.trim())}
-                    maxLength={15}
-                    className="form-control-taste"
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label className="form-label-taste">성함</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="성함 입력"
-                    value={studentName}
-                    onChange={(e) => setStudentName(e.target.value)}
-                    className="form-control-taste"
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-2">
-                  <Form.Label className="form-label-taste">취소용 비밀번호</Form.Label>
-                  <Form.Control
-                    type="password"
-                    placeholder="4자리 이상 설정"
-                    value={authNumber}
-                    onChange={(e) => setAuthNumber(e.target.value)}
-                    className="form-control-taste"
-                  />
-                </Form.Group>
-              </Form>
+              <div className="taste-card p-4 mb-3">
+                <LabsList
+                  booths={booths}
+                  selectedLab={selectedLab}
+                  onLabSelect={(labName) => setSelectedLab(labName)}
+                />
+              </div>
             </div>
 
-            <div className="taste-card p-4 mb-3 d-none d-lg-block">
-              <LabsList
-                booths={booths}
-                selectedLab={selectedLab}
-                onLabSelect={(labName) => setSelectedLab(labName)}
-              />
+            {/* CENTER MAIN COLUMN: Timetable */}
+            <div className="col-lg-6">
+              <div className="taste-card p-4">
+                <Timetable
+                  studentId={studentId}
+                  selectedLab={selectedLab}
+                  selectedDate={selectedDate}
+                  selectedBoothDesc={selectedBoothObj?.description}
+                  reservations={reservations.filter(
+                    (r) => r.booth_id === selectedLab && r.date === selectedDate
+                  )}
+                  currentReservationCount={currentReservationCount}
+                  maxReservationsPerStudent={settings.max_reservations_per_student || 2}
+                  maxCapacityPerSlot={settings.max_capacity_per_slot || 1}
+                  timeSlots={timeSlots}
+                  slotBlocks={slotBlocks}
+                  onCardClick={handleTimeSlotClick}
+                  isAdminMode={false}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* CENTER MAIN COLUMN */}
-          <div className="col-12 col-lg-6">
-            <div className="taste-card p-3 mb-3 d-lg-none">
-              <LabsList
-                booths={booths}
-                selectedLab={selectedLab}
-                onLabSelect={(labName) => setSelectedLab(labName)}
-              />
-            </div>
+            {/* RIGHT COLUMN: Date Selector & My Reservations */}
+            <div className="col-lg-3">
+              <div className="taste-card p-4 mb-3">
+                <h6 className="fw-semibold mb-3 text-slate-900 d-flex align-items-center gap-2">
+                  <CalendarIcon />
+                  <span>행사 날짜 선택</span>
+                </h6>
+                <div className="d-flex flex-column gap-2">
+                  {settings.event_dates?.map((dateStr) => {
+                    const isSelected = selectedDate === dateStr;
+                    return (
+                      <button
+                        key={dateStr}
+                        type="button"
+                        className={`btn date-pill-btn w-100 py-2.5 ${
+                          isSelected ? "active" : ""
+                        }`}
+                        onClick={() => setSelectedDate(dateStr)}
+                      >
+                        <span>{dateStr}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-            <div className="taste-card p-3 p-md-4">
-              <Timetable
+              <MyReservations
                 studentId={studentId}
-                selectedLab={selectedLab}
-                selectedDate={selectedDate}
-                selectedBoothDesc={selectedBoothObj?.description} // Admin-configured booth description
-                reservations={reservations.filter(
-                  (r) => r.booth_id === selectedLab && r.date === selectedDate
-                )}
+                reservationsByDate={{ [selectedDate]: reservations }}
                 currentReservationCount={currentReservationCount}
                 maxReservationsPerStudent={settings.max_reservations_per_student || 2}
-                maxCapacityPerSlot={settings.max_capacity_per_slot || 1}
-                timeSlots={timeSlots}
-                slotBlocks={slotBlocks}
-                onCardClick={handleTimeSlotClick}
-                isAdminMode={false}
+                onReservationClick={handleMyReservationClick}
               />
             </div>
-          </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="col-12 col-lg-3">
-            <div className="taste-card p-4 mb-3">
-              <h6 className="fw-semibold mb-3 text-slate-900 d-flex align-items-center gap-2">
-                <CalendarIcon />
-                <span>행사 날짜 선택</span>
-              </h6>
-              <div className="d-flex flex-column gap-2">
-                {settings.event_dates?.map((dateStr) => {
-                  const isSelected = selectedDate === dateStr;
-                  return (
+          </div>
+        </div>
+
+        {/* ========================================================
+            MOBILE & TABLET VIEW (< 992px): Apple Liquid Glass Controlled
+           ======================================================== */}
+        <div className="d-lg-none">
+          {/* TAB 1: TIMETABLE VIEW */}
+          {mobileTab === "timetable" && (
+            <div className="mobile-tab-view animate-fade-in">
+              {/* Compact Date Selector */}
+              <div className="taste-card p-3 mb-3">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span className="text-xs fw-semibold text-slate-700">행사 날짜 선택</span>
+                  {!studentId ? (
+                    <span
+                      className="text-xs text-blue-600 fw-medium cursor-pointer"
+                      onClick={() => setMobileTab("info")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      내 정보 입력하기 →
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      {studentName} ({studentId})
+                    </span>
+                  )}
+                </div>
+                <div className="d-flex gap-2 overflow-x-auto pb-1" style={{ WebkitOverflowScrolling: "touch" }}>
+                  {settings.event_dates?.map((dateStr) => (
                     <button
                       key={dateStr}
                       type="button"
-                      className={`btn date-pill-btn w-100 py-2.5 ${
-                        isSelected ? "active" : ""
+                      className={`btn date-pill-btn py-2 px-3 text-sm flex-shrink-0 ${
+                        selectedDate === dateStr ? "active" : ""
                       }`}
                       onClick={() => setSelectedDate(dateStr)}
                     >
-                      <span>{dateStr}</span>
+                      {dateStr}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
+
+              {/* Compact Booth Pills */}
+              <div className="taste-card p-3 mb-3">
+                <LabsList
+                  booths={booths}
+                  selectedLab={selectedLab}
+                  onLabSelect={(labName) => setSelectedLab(labName)}
+                />
+              </div>
+
+              {/* Main Timetable Card */}
+              <div className="taste-card p-3">
+                <Timetable
+                  studentId={studentId}
+                  selectedLab={selectedLab}
+                  selectedDate={selectedDate}
+                  selectedBoothDesc={selectedBoothObj?.description}
+                  reservations={reservations.filter(
+                    (r) => r.booth_id === selectedLab && r.date === selectedDate
+                  )}
+                  currentReservationCount={currentReservationCount}
+                  maxReservationsPerStudent={settings.max_reservations_per_student || 2}
+                  maxCapacityPerSlot={settings.max_capacity_per_slot || 1}
+                  timeSlots={timeSlots}
+                  slotBlocks={slotBlocks}
+                  onCardClick={handleTimeSlotClick}
+                  isAdminMode={false}
+                />
               </div>
             </div>
+          )}
 
-            <MyReservations
-              studentId={studentId}
-              reservationsByDate={{ [selectedDate]: reservations }}
-              currentReservationCount={currentReservationCount}
-              maxReservationsPerStudent={settings.max_reservations_per_student || 2}
-              onReservationClick={handleMyReservationClick}
-            />
-          </div>
+          {/* TAB 2: PROFILE / STUDENT INFO VIEW */}
+          {mobileTab === "info" && (
+            <div className="mobile-tab-view animate-fade-in">
+              <div className="taste-card p-4">
+                <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                  <h6 className="fw-semibold mb-0 text-slate-900 d-flex align-items-center gap-2">
+                    <UserIcon />
+                    <span>예약자 정보</span>
+                  </h6>
+                  <small className="text-slate-400 fs-7">필수 입력</small>
+                </div>
 
+                <Form>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="form-label-taste">학번</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="예: 202345603"
+                      value={studentId}
+                      onChange={(e) => setStudentId(e.target.value.trim())}
+                      maxLength={15}
+                      className="form-control-taste"
+                    />
+                  </Form.Group>
+
+                  <Form.Group className="mb-3">
+                    <Form.Label className="form-label-taste">성함</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="성함 입력"
+                      value={studentName}
+                      onChange={(e) => setStudentName(e.target.value)}
+                      className="form-control-taste"
+                    />
+                  </Form.Group>
+
+                  <Form.Group className="mb-4">
+                    <Form.Label className="form-label-taste">취소용 비밀번호</Form.Label>
+                    <Form.Control
+                      type="password"
+                      placeholder="4자리 이상 설정"
+                      value={authNumber}
+                      onChange={(e) => setAuthNumber(e.target.value)}
+                      className="form-control-taste"
+                    />
+                    <Form.Text className="text-slate-500 text-xs">
+                      * 예약 후 본인 확인 및 취소 시 필요한 비밀번호입니다.
+                    </Form.Text>
+                  </Form.Group>
+
+                  <Button
+                    variant="primary"
+                    className="btn-taste-primary w-100 py-2.5"
+                    onClick={() => {
+                      if (studentId && studentName && authNumber) {
+                        toast.success("예약자 정보가 설정되었습니다.");
+                        setMobileTab("timetable");
+                      } else {
+                        toast.warn("학번, 성함, 비밀번호를 모두 입력해 주세요.");
+                      }
+                    }}
+                  >
+                    확인 및 시간표 보러가기
+                  </Button>
+                </Form>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: MY RESERVATIONS VIEW */}
+          {mobileTab === "my" && (
+            <div className="mobile-tab-view animate-fade-in">
+              <MyReservations
+                studentId={studentId}
+                reservationsByDate={{ [selectedDate]: reservations }}
+                currentReservationCount={currentReservationCount}
+                maxReservationsPerStudent={settings.max_reservations_per_student || 2}
+                onReservationClick={handleMyReservationClick}
+              />
+            </div>
+          )}
         </div>
+
       </main>
 
       {/* FOOTER */}
@@ -501,6 +681,44 @@ function App() {
         </div>
       </footer>
 
+      {/* ========================================================
+          APPLE LIQUID GLASS FLOATING DOCK (Mobile Only, d-lg-none)
+         ======================================================== */}
+      <div className="liquid-glass-container d-lg-none">
+        <nav className="liquid-glass-bar">
+          <button
+            type="button"
+            className={`liquid-glass-tab ${mobileTab === "timetable" ? "active" : ""}`}
+            onClick={() => setMobileTab("timetable")}
+          >
+            <TimetableTabIcon />
+            <span>시간표</span>
+          </button>
+
+          <button
+            type="button"
+            className={`liquid-glass-tab ${mobileTab === "info" ? "active" : ""}`}
+            onClick={() => setMobileTab("info")}
+          >
+            <ProfileTabIcon />
+            <span>내 정보</span>
+            {!studentId && <span className="liquid-dot" />}
+          </button>
+
+          <button
+            type="button"
+            className={`liquid-glass-tab ${mobileTab === "my" ? "active" : ""}`}
+            onClick={() => setMobileTab("my")}
+          >
+            <TicketTabIcon />
+            <span>내 예약</span>
+            {currentReservationCount > 0 && (
+              <span className="liquid-badge">{currentReservationCount}</span>
+            )}
+          </button>
+        </nav>
+      </div>
+
       {/* ADMIN MODAL */}
       <AdminModal
         show={showAdminModal}
@@ -521,7 +739,14 @@ function App() {
         </Modal.Header>
         <Modal.Body className="text-center py-4">
           <p className="mb-3 text-slate-600">예약을 진행하려면 학번, 성함, 비밀번호를 먼저 입력해 주세요.</p>
-          <Button variant="primary" className="btn-taste-primary px-4" onClick={() => setShowInfoModal(false)}>
+          <Button
+            variant="primary"
+            className="btn-taste-primary px-4"
+            onClick={() => {
+              setShowInfoModal(false);
+              setMobileTab("info");
+            }}
+          >
             정보 입력하기
           </Button>
         </Modal.Body>

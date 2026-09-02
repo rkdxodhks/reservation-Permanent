@@ -334,3 +334,109 @@ body {
     flex-shrink: 0;
   }
 }
+
+/* ========================================================
+   Liquid Glass Floating Dock (Mobile Only)
+   ======================================================== */
+.liquid-glass-container {
+  position: fixed;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1040;
+  pointer-events: none;
+  padding: 0 16px;
+}
+
+.liquid-glass-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 360px;
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 36px -4px rgba(15, 23, 42, 0.16), 0 4px 14px rgba(0, 0, 0, 0.05);
+  border-radius: 9999px;
+  padding: 5px 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--slate-500);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 2px;
+  user-select: none;
+}
+
+.liquid-glass-tab:active {
+  transform: scale(0.92);
+}
+
+.liquid-glass-tab.active {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--blue-600);
+}
+
+.liquid-glass-tab svg {
+  transition: transform 0.2s ease, stroke 0.2s ease;
+}
+
+.liquid-glass-tab.active svg {
+  transform: translateY(-1px);
+  stroke: var(--blue-600);
+}
+
+.liquid-badge {
+  position: absolute;
+  top: 3px;
+  right: calc(50% - 18px);
+  background-color: var(--rose-600);
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.liquid-dot {
+  position: absolute;
+  top: 5px;
+  right: calc(50% - 14px);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+}
+
+/* Mobile Content Padding so Floating Bar doesn't overlap */
+@media (max-width: 991.98px) {
+  .app-main-content-mobile {
+    padding-bottom: 95px !important;
+  }
+}
