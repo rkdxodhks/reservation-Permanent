@@ -19,6 +19,7 @@ const Timetable = ({
   studentId,
   selectedLab,
   selectedDate,
+  selectedBoothDesc, // Admin-configured booth description text
   reservations = [],
   currentReservationCount = 0,
   maxReservationsPerStudent = 2,
@@ -85,11 +86,16 @@ const Timetable = ({
 
   return (
     <div className="timetable-wrapper">
-      {/* Clean Main Header (Subtitle and Date badge removed per request) */}
+      {/* Main Header with Admin-configured Booth Description */}
       <div className="mb-3 pb-3 border-bottom">
-        <h4 className="fw-semibold mb-0 text-slate-900">
+        <h4 className="fw-semibold mb-1 text-slate-900">
           {selectedLab} <span className="text-slate-500 fs-6 fw-normal">예약 시간표</span>
         </h4>
+        {selectedBoothDesc && (
+          <p className="text-slate-600 text-sm mb-0 mt-1">
+            {selectedBoothDesc}
+          </p>
+        )}
       </div>
 
       {/* Timetable Slot Grid */}

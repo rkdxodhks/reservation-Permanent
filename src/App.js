@@ -1,4 +1,4 @@
-// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with master admin passcode (202345603) and strict cancellation password validation security.
+// Reading this as: Pusan National University BioMaterial Science (BAF) reservation platform with admin-configured booth description text in Timetable header and comfortable header spacing.
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LabsList, MyReservations } from "./StatusPanel";
@@ -51,7 +51,6 @@ function App() {
   const [selectedLab, setSelectedLab] = useState(DEFAULT_BOOTHS[0].name);
   const [selectedDate, setSelectedDate] = useState(DEFAULT_SETTINGS.event_dates[0]);
 
-  // Cancel Verification State
   const [cancelAuthPassword, setCancelAuthPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -172,7 +171,6 @@ function App() {
     setCurrentReservationCount(count);
   }, [studentId, reservations]);
 
-  // Pre-fill cancellation password input when modal opens
   useEffect(() => {
     if (showReservationModal && modalContext?.type === "cancel") {
       setCancelAuthPassword(authNumber || "");
@@ -184,6 +182,9 @@ function App() {
     settings.end_time || "16:00",
     settings.slot_interval || 20
   );
+
+  // Find description of currently selected booth
+  const selectedBoothObj = booths.find((b) => b.name === selectedLab);
 
   const handleTimeSlotClick = (timeSlot, reservationsForSlot) => {
     if (!studentId || !studentName || !authNumber) {
@@ -269,7 +270,6 @@ function App() {
     }
   };
 
-  // SECURITY ENHANCEMENT: Verification of secret password before cancellation
   const handleConfirmCancel = async () => {
     if (!modalContext || !modalContext.reservationId) return;
 
@@ -310,9 +310,9 @@ function App() {
     <div className="app-main-wrapper bg-slate min-vh-100 d-flex flex-column">
       <ToastContainer transition={Slide} position="top-right" autoClose={3000} />
 
-      {/* HEADER BAR */}
-      <header className="taste-header sticky-top border-bottom">
-        <div className="container-fluid max-w-7xl px-3 py-2.5 d-flex justify-content-between align-items-center">
+      {/* HEADER BAR (Comfortable Spacing py-3 px-4) */}
+      <header className="taste-header sticky-top border-bottom py-3">
+        <div className="container-fluid max-w-7xl px-3 px-md-4 d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-3">
             <div className="brand-logo-group d-flex align-items-center gap-2">
               <img
@@ -428,6 +428,7 @@ function App() {
                 studentId={studentId}
                 selectedLab={selectedLab}
                 selectedDate={selectedDate}
+                selectedBoothDesc={selectedBoothObj?.description} // Admin-configured booth description
                 reservations={reservations.filter(
                   (r) => r.booth_id === selectedLab && r.date === selectedDate
                 )}
@@ -442,7 +443,7 @@ function App() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Date Selector on top of My Reservations */}
+          {/* RIGHT COLUMN */}
           <div className="col-12 col-lg-3">
             <div className="taste-card p-4 mb-3">
               <h6 className="fw-semibold mb-3 text-slate-900 d-flex align-items-center gap-2">
@@ -528,7 +529,7 @@ function App() {
         </Modal.Body>
       </Modal>
 
-      {/* RESERVATION CONFIRM / CANCEL MODAL WITH PASSWORD VERIFICATION */}
+      {/* RESERVATION CONFIRM / CANCEL MODAL */}
       <Modal
         show={showReservationModal}
         onHide={() => setShowReservationModal(false)}
@@ -560,7 +561,6 @@ function App() {
                 <p className="mb-0 text-slate-700"><strong>시간:</strong> {modalContext?.timeSlot}</p>
               </div>
               
-              {/* Security password input verification */}
               <Form.Group className="mt-3 text-start">
                 <Form.Label className="form-label-taste text-slate-900 fw-semibold">
                   취소 비밀번호 검증
