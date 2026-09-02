@@ -1,3 +1,5 @@
+// Reading this as: Institutional event reservation platform for Pusan National University Pharmacy (BAF), with a clean, trust-first minimalist design language adhering to taste-skill guidelines.
+
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LabsList, MyReservations } from "./StatusPanel";
 import Timetable from "./Timetable";
@@ -13,6 +15,30 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+// SVG Icons (Replacing emojis per taste-skill anti-emoji policy)
+const SettingsIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+    <line x1="16" y1="2" x2="16" y2="6"/>
+    <line x1="8" y1="2" x2="8" y2="6"/>
+    <line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+);
 
 function App() {
   // 1. Dynamic Config State
@@ -233,7 +259,7 @@ function App() {
       const { error } = await supabase.from("reservations").insert([newReservation]);
       if (error) throw error;
 
-      toast.success("예약이 완료되었습니다!");
+      toast.success("예약이 완료되었습니다.");
       fetchReservationsAndBlocks();
     } catch (err) {
       console.error("Create reservation error:", err);
@@ -272,113 +298,111 @@ function App() {
     <div className="app-main-wrapper bg-slate min-vh-100 d-flex flex-column">
       <ToastContainer transition={Slide} position="top-right" autoClose={3000} />
 
-      {/* TOP BRAND NAVBAR */}
-      <header className="pnu-header sticky-top border-bottom shadow-sm">
-        <div className="container-fluid max-w-7xl px-3 py-2 d-flex justify-content-between align-items-center">
+      {/* HEADER BAR */}
+      <header className="taste-header sticky-top border-bottom">
+        <div className="container-fluid max-w-7xl px-3 py-3 d-flex justify-content-between align-items-center">
           
-          {/* Logos & Title */}
           <div className="d-flex align-items-center gap-3">
             <div className="brand-logo-group d-flex align-items-center gap-2">
               <img
                 src={`${publicUrl}/부산대.ico`}
-                alt="부산대학교 아이콘"
-                className="pnu-icon"
+                alt="PNU"
+                className="brand-icon"
               />
-              <div className="brand-divider" />
+              <div className="brand-line" />
               <img
                 src={`${publicUrl}/baf-logo.png`}
-                alt="BAF 로고"
-                className="baf-logo"
+                alt="BAF"
+                className="baf-icon"
               />
             </div>
 
             <div>
               <div className="d-flex align-items-center gap-2">
-                <span className="badge bg-pnu-gold text-dark font-mono px-2 py-1 fw-bold fs-7">
-                  PNU PHARM
+                <span className="pill-tag font-mono">
+                  PNU PHARMACY
                 </span>
-                <h1 className="h6 fw-bold mb-0 text-white brand-title">
+                <h1 className="h6 fw-semibold mb-0 text-slate-900 brand-title">
                   {settings.event_title || "부산대학교 약학대학 BAF 체험부스 예약 시스템"}
                 </h1>
               </div>
-              <small className="text-slate-300 d-none d-md-inline text-xs">
-                부산대학교 약학대학 연구실 체험부스 실시간 예약 플랫폼
+              <small className="text-slate-500 d-none d-md-inline text-xs">
+                실시간 동기화 예약 플랫폼
               </small>
             </div>
           </div>
 
-          {/* Admin Toggle */}
           <Button
-            variant="outline-light"
+            variant="outline-secondary"
             size="sm"
-            className="btn-admin-pill d-flex align-items-center gap-1 rounded-pill px-3"
+            className="btn-taste-outline d-flex align-items-center gap-2 rounded-pill px-3"
             onClick={() => setShowAdminModal(true)}
           >
-            <span>⚙️</span>
+            <SettingsIcon />
             <span className="d-none d-sm-inline font-medium">관리자</span>
           </Button>
         </div>
       </header>
 
-      {/* MAIN CONTAINER */}
-      <main className="container-fluid max-w-7xl py-3 py-md-4 flex-grow-1">
-        <div className="row g-3 g-lg-4">
+      {/* MAIN CONTENT */}
+      <main className="container-fluid max-w-7xl py-4 flex-grow-1">
+        <div className="row g-4">
           
-          {/* LEFT SIDEBAR CONTROLS */}
+          {/* LEFT COLUMN */}
           <div className="col-12 col-lg-4 col-xl-3">
             
-            {/* Student Info Panel */}
-            <div className="pnu-card p-3 p-md-4 mb-3">
+            {/* Student Form Card */}
+            <div className="taste-card p-4 mb-3">
               <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                <h6 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                  <span className="icon-circle bg-pnu-blue text-white">✍️</span>
-                  <span>예약자 정보 입력</span>
+                <h6 className="fw-semibold mb-0 text-slate-900 d-flex align-items-center gap-2">
+                  <UserIcon />
+                  <span>예약자 정보</span>
                 </h6>
-                <small className="text-muted fs-7">* 필수</small>
+                <small className="text-slate-400 fs-7">필수 입력</small>
               </div>
 
               <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label className="form-label-custom">학번 (9자리)</Form.Label>
+                  <Form.Label className="form-label-taste">학번 (9자리)</Form.Label>
                   <Form.Control
                     type="text"
                     placeholder="예: 202612345"
                     value={studentId}
                     onChange={(e) => setStudentId(e.target.value.trim())}
                     maxLength={15}
-                    className="form-control-styled"
+                    className="form-control-taste"
                   />
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label className="form-label-custom">성함</Form.Label>
+                  <Form.Label className="form-label-taste">성함</Form.Label>
                   <Form.Control
                     type="text"
                     placeholder="성함 입력"
                     value={studentName}
                     onChange={(e) => setStudentName(e.target.value)}
-                    className="form-control-styled"
+                    className="form-control-taste"
                   />
                 </Form.Group>
 
                 <Form.Group className="mb-2">
-                  <Form.Label className="form-label-custom">취소용 비밀번호</Form.Label>
+                  <Form.Label className="form-label-taste">취소용 비밀번호</Form.Label>
                   <Form.Control
                     type="password"
                     placeholder="4자리 이상 설정"
                     value={authNumber}
                     onChange={(e) => setAuthNumber(e.target.value)}
-                    className="form-control-styled"
+                    className="form-control-taste"
                   />
                 </Form.Group>
               </Form>
             </div>
 
-            {/* Date Selector Tabs */}
-            <div className="pnu-card p-3 p-md-4 mb-3">
-              <h6 className="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
-                <span className="icon-circle bg-pnu-navy text-white">📅</span>
-                <span>행사 날짜 선택</span>
+            {/* Date Selector */}
+            <div className="taste-card p-4 mb-3">
+              <h6 className="fw-semibold mb-3 text-slate-900 d-flex align-items-center gap-2">
+                <CalendarIcon />
+                <span>행사 날짜</span>
               </h6>
               <div className="d-flex flex-wrap gap-2">
                 {settings.event_dates?.map((dateStr) => {
@@ -387,8 +411,8 @@ function App() {
                     <button
                       key={dateStr}
                       type="button"
-                      className={`btn date-select-btn flex-grow-1 py-2 ${
-                        isSelected ? "active shadow-sm" : ""
+                      className={`btn date-pill-btn flex-grow-1 py-2 ${
+                        isSelected ? "active" : ""
                       }`}
                       onClick={() => setSelectedDate(dateStr)}
                     >
@@ -399,8 +423,8 @@ function App() {
               </div>
             </div>
 
-            {/* Booth Selector List (Desktop View) */}
-            <div className="pnu-card p-3 p-md-4 mb-3 d-none d-lg-block">
+            {/* Booth List (Desktop) */}
+            <div className="taste-card p-4 mb-3 d-none d-lg-block">
               <LabsList
                 booths={booths}
                 selectedLab={selectedLab}
@@ -408,7 +432,7 @@ function App() {
               />
             </div>
 
-            {/* My Reservations Panel */}
+            {/* My Reservations */}
             <MyReservations
               studentId={studentId}
               reservationsByDate={{ [selectedDate]: reservations }}
@@ -418,11 +442,11 @@ function App() {
             />
           </div>
 
-          {/* RIGHT MAIN PANEL */}
+          {/* RIGHT COLUMN: TIMETABLE */}
           <div className="col-12 col-lg-8 col-xl-9">
             
-            {/* Booth Selector Pill Tabs for Mobile & Tablet */}
-            <div className="pnu-card p-3 mb-3 d-lg-none">
+            {/* Booth Pills for Mobile */}
+            <div className="taste-card p-3 mb-3 d-lg-none">
               <LabsList
                 booths={booths}
                 selectedLab={selectedLab}
@@ -430,8 +454,8 @@ function App() {
               />
             </div>
 
-            {/* Timetable View */}
-            <div className="pnu-card p-3 p-md-4">
+            {/* Main Timetable */}
+            <div className="taste-card p-3 p-md-4">
               <Timetable
                 studentId={studentId}
                 selectedLab={selectedLab}
@@ -453,22 +477,22 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      <footer className="pnu-footer border-top py-4 mt-auto">
+      <footer className="taste-footer border-top py-4 mt-auto">
         <div className="container max-w-7xl text-center">
           <div className="d-flex justify-content-center align-items-center gap-3 mb-2">
             <img
               src={`${publicUrl}/부산대.ico`}
-              alt="부산대학교 아이콘"
-              style={{ width: "24px", height: "24px" }}
+              alt="PNU"
+              style={{ width: "20px", height: "20px" }}
             />
             <img
               src={`${publicUrl}/baf-logo.png`}
-              alt="BAF 로고"
-              style={{ height: "22px" }}
+              alt="BAF"
+              style={{ height: "20px" }}
             />
-            <span className="fw-bold text-slate-300">부산대학교 약학대학 BAF</span>
+            <span className="fw-medium text-slate-700 text-sm">부산대학교 약학대학 BAF</span>
           </div>
-          <p className="mb-0 text-slate-400 small">
+          <p className="mb-0 text-slate-500 small">
             {settings.event_title || "부산대학교 약학대학 BAF 체험부스 실시간 예약 시스템"} © 2026 Pusan National University Pharmacy. All Rights Reserved.
           </p>
         </div>
@@ -488,14 +512,14 @@ function App() {
       />
 
       {/* USER INFO PROMPT MODAL */}
-      <Modal show={showInfoModal} onHide={() => setShowInfoModal(false)} centered>
+      <Modal show={showInfoModal} onHide={() => setShowInfoModal(false)} centered className="taste-modal">
         <Modal.Header closeButton className="border-bottom-0">
-          <Modal.Title className="h6 fw-bold">안내</Modal.Title>
+          <Modal.Title className="h6 fw-semibold text-slate-900">입력 안내</Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center py-4">
-          <p className="mb-3 text-secondary">예약을 진행하려면 먼저 학번과 성함, 취소용 비밀번호를 입력해야 합니다.</p>
-          <Button variant="primary" className="btn-pnu-primary px-4" onClick={() => setShowInfoModal(false)}>
-            확인 및 정보 입력하기
+          <p className="mb-3 text-slate-600">예약을 진행하려면 학번, 성함, 비밀번호를 먼저 입력해 주세요.</p>
+          <Button variant="primary" className="btn-taste-primary px-4" onClick={() => setShowInfoModal(false)}>
+            정보 입력하기
           </Button>
         </Modal.Body>
       </Modal>
@@ -505,48 +529,46 @@ function App() {
         show={showReservationModal}
         onHide={() => setShowReservationModal(false)}
         centered
-        className="reservation-action-modal"
+        className="taste-modal"
       >
         <Modal.Header closeButton className="border-bottom-0">
-          <Modal.Title className="h6 fw-bold">
-            {modalContext?.type === "cancel" ? "예약 취소 확인" : "예약 신청 확인"}
+          <Modal.Title className="h6 fw-semibold text-slate-900">
+            {modalContext?.type === "cancel" ? "예약 취소" : "예약 신청"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="py-3">
           {modalContext?.type === "confirm" ? (
-            <div className="text-center">
-              <div className="fs-1 mb-2">📌</div>
-              <h5 className="fw-bold mb-3 text-pnu-blue">{modalContext.lab}</h5>
-              <div className="bg-light p-3 rounded mb-3 text-start border">
-                <p className="mb-1"><strong>예약 날짜:</strong> {modalContext.date}</p>
-                <p className="mb-1"><strong>시간대:</strong> {modalContext.timeSlot}</p>
-                <p className="mb-0"><strong>신청자:</strong> {studentName} ({studentId})</p>
+            <div>
+              <h5 className="fw-semibold mb-3 text-slate-900">{modalContext.lab}</h5>
+              <div className="bg-slate-50 p-3 rounded-3 mb-3 border text-start">
+                <p className="mb-1 text-slate-700"><strong>날짜:</strong> {modalContext.date}</p>
+                <p className="mb-1 text-slate-700"><strong>시간:</strong> {modalContext.timeSlot}</p>
+                <p className="mb-0 text-slate-700"><strong>신청자:</strong> {studentName} ({studentId})</p>
               </div>
-              <p className="small text-muted mb-0">위 정보로 예약을 확정하시겠습니까?</p>
+              <p className="small text-slate-500 mb-0">위 정보로 예약을 진행하시겠습니까?</p>
             </div>
           ) : (
-            <div className="text-center">
-              <div className="fs-1 mb-2">🗑️</div>
-              <h5 className="fw-bold mb-3 text-danger">예약을 취소하시겠습니까?</h5>
-              <div className="bg-light p-3 rounded mb-3 text-start border">
-                <p className="mb-1"><strong>부스:</strong> {modalContext?.lab}</p>
-                <p className="mb-1"><strong>날짜:</strong> {modalContext?.date}</p>
-                <p className="mb-0"><strong>시간대:</strong> {modalContext?.timeSlot}</p>
+            <div>
+              <h5 className="fw-semibold mb-3 text-slate-900">예약을 취소하시겠습니까?</h5>
+              <div className="bg-slate-50 p-3 rounded-3 mb-3 border text-start">
+                <p className="mb-1 text-slate-700"><strong>부스:</strong> {modalContext?.lab}</p>
+                <p className="mb-1 text-slate-700"><strong>날짜:</strong> {modalContext?.date}</p>
+                <p className="mb-0 text-slate-700"><strong>시간:</strong> {modalContext?.timeSlot}</p>
               </div>
-              <p className="small text-danger mb-0">취소 후 다시 해당 슬롯을 예약해야 합니다.</p>
+              <p className="small text-rose-600 mb-0">취소 후 다시 해당 슬롯을 예약해야 합니다.</p>
             </div>
           )}
         </Modal.Body>
         <Modal.Footer className="border-top-0">
-          <Button variant="secondary" onClick={() => setShowReservationModal(false)} disabled={loading}>
-            창 닫기
+          <Button variant="light" onClick={() => setShowReservationModal(false)} disabled={loading}>
+            닫기
           </Button>
           {modalContext?.type === "confirm" ? (
-            <Button variant="primary" className="btn-pnu-primary" onClick={handleConfirmReservation} disabled={loading}>
+            <Button variant="primary" className="btn-taste-primary" onClick={handleConfirmReservation} disabled={loading}>
               {loading ? <Spinner animation="border" size="sm" /> : "예약 확정"}
             </Button>
           ) : (
-            <Button variant="danger" onClick={handleConfirmCancel} disabled={loading}>
+            <Button variant="danger" className="btn-taste-danger" onClick={handleConfirmCancel} disabled={loading}>
               {loading ? <Spinner animation="border" size="sm" /> : "취소 실행"}
             </Button>
           )}

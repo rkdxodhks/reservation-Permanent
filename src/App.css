@@ -1,272 +1,331 @@
 /* ========================================================
-   부산대학교 약학대학 BAF 체험부스 예약 시스템 2.0
-   PNU Premium & Human-Centered Design System
+   taste-skill Anti-Slop Design System
+   Pusan National University Pharmacy (BAF) Reservation System
    ======================================================== */
 
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
 :root {
-  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
   
-  /* PNU Brand Palette */
-  --pnu-navy: #0a192f;
-  --pnu-navy-light: #1e293b;
-  --pnu-blue: #1f4ef5;
-  --pnu-blue-hover: #1640d6;
-  --pnu-blue-subtle: #eff6ff;
-  --pnu-gold: #fbbf24;
+  /* Slate Neutral Palette (No pure #000000 black, no purple slop) */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
 
-  --bg-slate: #f8fafc;
-  --text-dark: #0f172a;
-  --text-slate: #475569;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
+  /* Restrained Accent Palette */
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-50: #eff6ff;
 
-  --emerald-main: #10b981;
-  --emerald-subtle: #ecfdf5;
-  --rose-main: #ef4444;
-  --rose-subtle: #fef2f2;
+  --emerald-600: #059669;
+  --emerald-50: #ecfdf5;
+
+  --rose-600: #e11d48;
+  --rose-50: #fff1f2;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-slate);
-  color: var(--text-dark);
+  background-color: var(--slate-50);
+  color: var(--slate-900);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Container */
+/* Utilities */
 .max-w-7xl {
   max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
 }
 
-.fs-7 {
-  font-size: 0.75rem;
+.max-w-sm { max-width: 380px; }
+.max-w-md { max-width: 480px; }
+
+.fs-7 { font-size: 0.75rem; }
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Header & Brand Bar */
-.pnu-header {
-  background: linear-gradient(135deg, #0a192f 0%, #1e293b 100%);
-  color: #ffffff;
-  backdrop-filter: blur(12px);
-}
-
-.pnu-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  object-fit: contain;
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 2px;
-}
-
-.baf-logo {
-  height: 32px;
-  object-fit: contain;
-  filter: brightness(1.1);
-}
-
-.brand-divider {
-  width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.bg-pnu-gold {
-  background-color: var(--pnu-gold);
-}
-
-.brand-title {
-  letter-spacing: -0.02em;
-}
-
-.btn-admin-pill {
-  border-color: rgba(255, 255, 255, 0.25);
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.btn-admin-pill:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-color: #ffffff;
-}
-
-/* PNU Card System */
-.pnu-card {
+/* Taste Header */
+.taste-header {
   background-color: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-bottom: 1px solid var(--slate-200);
+  backdrop-filter: blur(8px);
 }
 
-.icon-circle {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
+.brand-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: contain;
 }
 
-.bg-pnu-blue {
-  background-color: var(--pnu-blue);
+.baf-icon {
+  height: 22px;
+  object-fit: contain;
 }
 
-.bg-pnu-navy {
-  background-color: var(--pnu-navy);
+.brand-line {
+  width: 1px;
+  height: 20px;
+  background-color: var(--slate-200);
+}
+
+.pill-tag {
+  background-color: var(--slate-100);
+  color: var(--slate-700);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--slate-200);
+  letter-spacing: 0.05em;
+}
+
+/* Taste Card System */
+.taste-card {
+  background-color: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 /* Form inputs */
-.form-label-custom {
-  font-size: 0.825rem;
+.form-label-taste {
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-slate);
+  color: var(--slate-700);
   margin-bottom: 0.35rem;
 }
 
-.form-control-styled {
-  border-radius: 10px;
-  border: 1px solid var(--border-color);
-  padding: 0.6rem 0.85rem;
-  font-size: 0.925rem;
-  transition: all 0.2s ease;
+.form-control-taste {
+  border-radius: 8px;
+  border: 1px solid var(--slate-200);
+  padding: 0.55rem 0.8rem;
+  font-size: 0.875rem;
+  color: var(--slate-900);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.form-control-styled:focus {
-  border-color: var(--pnu-blue);
-  box-shadow: 0 0 0 3px rgba(31, 78, 245, 0.12);
+.form-control-taste:focus {
+  border-color: var(--blue-600);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  outline: none;
 }
 
-/* Date Selector Buttons */
-.date-select-btn {
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+/* Date Pill Button */
+.date-pill-btn {
+  border: 1px solid var(--slate-200);
+  border-radius: 8px;
   background-color: #ffffff;
-  color: var(--text-slate);
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  color: var(--slate-700);
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.15s ease;
 }
 
-.date-select-btn:hover {
-  border-color: var(--pnu-blue);
-  color: var(--pnu-blue);
-  background-color: var(--pnu-blue-subtle);
+.date-pill-btn:hover {
+  border-color: var(--slate-300);
+  background-color: var(--slate-100);
+  color: var(--slate-900);
 }
 
-.date-select-btn.active {
-  background-color: var(--pnu-blue);
-  border-color: var(--pnu-blue);
+.date-pill-btn.active {
+  background-color: var(--slate-900);
+  border-color: var(--slate-900);
   color: #ffffff;
 }
 
 /* Booth Pill Buttons */
-.booth-pill-btn {
-  padding: 0.55rem 1rem;
+.booth-taste-pill {
+  padding: 0.45rem 0.85rem;
   border-radius: 9999px;
-  font-size: 0.875rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: none;
+  font-size: 0.8125rem;
+  border: 1px solid var(--slate-200);
+  background-color: #ffffff;
+  color: var(--slate-700);
+  transition: all 0.15s ease;
 }
 
-.booth-pill-btn:hover {
-  transform: translateY(-1px);
+.booth-taste-pill:hover {
+  border-color: var(--slate-300);
+  background-color: var(--slate-50);
 }
 
-.booth-color-dot {
-  width: 8px;
-  height: 8px;
+.booth-taste-pill.active {
+  background-color: var(--slate-900);
+  border-color: var(--slate-900);
+  color: #ffffff;
+}
+
+.booth-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   display: inline-block;
 }
 
-/* Timetable Cards */
-.slot-card {
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  user-select: none;
+/* Timetable Cards (Anti-Slop Grid) */
+.slot-card-taste {
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
   background-color: #ffffff;
-  overflow: hidden;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
 }
 
-.slot-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.1);
+.slot-card-taste:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
   cursor: pointer;
 }
 
-/* Status variants */
-.slot-card-available {
-  border-color: #cbd5e1;
+.slot-card-taste:active {
+  transform: scale(0.98);
 }
 
-.slot-card-mine {
-  border: 2px solid #10b981 !important;
-  background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%) !important;
-  box-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.15) !important;
+.slot-time-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--slate-900);
 }
 
-.slot-card-partially {
+/* Slot status variants */
+.slot-status-available {
+  border-color: var(--slate-200);
+}
+
+.slot-status-mine {
+  border: 1.5px solid #10b981 !important;
+  background-color: #f0fdf4 !important;
+}
+
+.slot-status-partially {
   border-color: #93c5fd;
   background-color: #f8fafc;
 }
 
-.slot-card-full {
+.slot-status-full {
   border-color: #fca5a5;
   background-color: #fef2f2;
 }
 
-.slot-card-disabled {
-  opacity: 0.6;
-  background-color: #f1f5f9;
+.slot-status-disabled {
+  opacity: 0.5;
+  background-color: var(--slate-100);
   cursor: not-allowed !important;
 }
 
-.slot-card-blocked {
-  opacity: 0.55;
+.slot-status-blocked {
+  opacity: 0.5;
   background: repeating-linear-gradient(
     45deg,
-    #f1f5f9,
-    #f1f5f9 10px,
-    #e2e8f0 10px,
-    #e2e8f0 20px
+    var(--slate-100),
+    var(--slate-100) 8px,
+    var(--slate-200) 8px,
+    var(--slate-200) 16px
   ) !important;
   cursor: not-allowed !important;
 }
 
-.text-pnu-blue {
-  color: var(--pnu-blue) !important;
+/* Taste Badges */
+.taste-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
 }
 
-.btn-pnu-primary {
-  background-color: var(--pnu-blue);
-  border-color: var(--pnu-blue);
+.taste-badge-emerald {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.taste-badge-success {
+  background-color: #10b981;
   color: #ffffff;
 }
 
-.btn-pnu-primary:hover {
-  background-color: var(--pnu-blue-hover);
-  border-color: var(--pnu-blue-hover);
+.taste-badge-primary {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.taste-badge-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.taste-badge-neutral {
+  background-color: var(--slate-200);
+  color: var(--slate-700);
+}
+
+/* Pill date tag */
+.pill-date-tag {
+  background-color: var(--slate-100);
+  color: var(--slate-800);
+  border: 1px solid var(--slate-200);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* Taste Buttons */
+.btn-taste-primary {
+  background-color: var(--blue-600);
+  border-color: var(--blue-600);
+  color: #ffffff;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.btn-taste-primary:hover {
+  background-color: var(--blue-700);
+  border-color: var(--blue-700);
   color: #ffffff;
 }
 
-/* Footer */
-.pnu-footer {
+.btn-taste-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-taste-outline {
+  border-color: var(--slate-200);
+  color: var(--slate-700);
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-taste-outline:hover {
+  background-color: var(--slate-100);
+  border-color: var(--slate-300);
+  color: var(--slate-900);
+}
+
+/* Taste Footer */
+.taste-footer {
   background-color: #ffffff;
-  color: var(--text-muted);
+  color: var(--slate-500);
 }
 
-/* Responsive Touch Adjustments */
+/* Responsive Touch */
 @media (max-width: 767.98px) {
-  .slot-card .slot-time {
-    font-size: 1.05rem !important;
-  }
-
   .booth-pill-container {
     overflow-x: auto;
     flex-wrap: nowrap !important;
@@ -274,7 +333,7 @@ body {
     -webkit-overflow-scrolling: touch;
   }
 
-  .booth-pill-btn {
+  .booth-taste-pill {
     white-space: nowrap;
     flex-shrink: 0;
   }

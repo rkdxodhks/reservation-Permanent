@@ -18,20 +18,16 @@ export const AdminModal = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState("settings");
 
-  // Setting form state
   const [formSettings, setFormSettings] = useState(settings);
   const [newDateInput, setNewDateInput] = useState("");
 
-  // Booth form state
   const [boothList, setBoothList] = useState(booths);
   const [newBoothName, setNewBoothName] = useState("");
   const [newBoothDesc, setNewBoothDesc] = useState("");
-  const [newBoothColor, setNewBoothColor] = useState("#3b82f6");
+  const [newBoothColor, setNewBoothColor] = useState("#2563eb");
 
-  // Reservation search state
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Slot blocking state
   const [selectedBlockBooth, setSelectedBlockBooth] = useState(booths[0]?.name || "");
   const [selectedBlockDate, setSelectedBlockDate] = useState(settings?.event_dates?.[0] || "");
 
@@ -74,21 +70,20 @@ export const AdminModal = ({
         });
 
       if (error) throw error;
-      toast.success("행사 설정이 성공적으로 저장되었습니다.");
+      toast.success("행사 설정이 저장되었습니다.");
       onUpdateSettings(formSettings);
       onRefreshData();
     } catch (err) {
       console.error("Save settings error:", err);
-      // Fallback local update
       onUpdateSettings(formSettings);
-      toast.info("로컬 설정이 저장되었습니다 (Supabase 연결 확인 필요).");
+      toast.info("로컬 설정이 저장되었습니다.");
     }
   };
 
   const handleAddDate = () => {
     if (!newDateInput) return;
     if (formSettings.event_dates.includes(newDateInput)) {
-      toast.warning("이미 존재하지 않는 날짜입니다.");
+      toast.warning("이미 존재하는 날짜입니다.");
       return;
     }
     const updatedDates = [...formSettings.event_dates, newDateInput].sort();
@@ -105,7 +100,6 @@ export const AdminModal = ({
     setFormSettings({ ...formSettings, event_dates: updatedDates });
   };
 
-  // Booth handlers
   const handleAddBooth = async () => {
     if (!newBoothName.trim()) {
       toast.warning("부스 이름을 입력해 주세요.");
@@ -128,7 +122,6 @@ export const AdminModal = ({
       const fallbackList = [...boothList, { ...newBoothItem, id: Date.now() }];
       setBoothList(fallbackList);
       onUpdateBooths(fallbackList);
-      toast.info("로컬 목록에 추가되었습니다.");
     }
 
     setNewBoothName("");
@@ -136,9 +129,7 @@ export const AdminModal = ({
   };
 
   const handleDeleteBooth = async (boothId) => {
-    if (!window.confirm("이 부스를 삭제하시겠습니까? 관련 예약 정보 확인이 필요합니다.")) {
-      return;
-    }
+    if (!window.confirm("이 부스를 삭제하시겠습니까?")) return;
     try {
       const { error } = await supabase.from("booths").delete().eq("id", boothId);
       if (error) throw error;
@@ -152,9 +143,8 @@ export const AdminModal = ({
     }
   };
 
-  // Admin delete reservation
   const handleDeleteReservation = async (resId) => {
-    if (!window.confirm("정말로 이 예약을 강제 취소하시겠습니까?")) return;
+    if (!window.confirm("예약을 강제 취소하시겠습니까?")) return;
 
     try {
       const { error } = await supabase.from("reservations").delete().eq("id", resId);
@@ -167,7 +157,6 @@ export const AdminModal = ({
     }
   };
 
-  // Toggle slot block
   const handleToggleSlotBlock = async (timeSlot) => {
     const isBlocked = slotBlocks.some(
       (b) => b.booth_id === selectedBlockBooth && b.date === selectedBlockDate && b.time_slot === timeSlot
@@ -175,7 +164,6 @@ export const AdminModal = ({
 
     try {
       if (isBlocked) {
-        // Unblock
         const { error } = await supabase
           .from("slot_blocks")
           .delete()
@@ -183,33 +171,31 @@ export const AdminModal = ({
         if (error) throw error;
         toast.info(`${timeSlot} 슬롯 차단 해제`);
       } else {
-        // Block
         const { error } = await supabase.from("slot_blocks").insert([
           {
             booth_id: selectedBlockBooth,
             date: selectedBlockDate,
             time_slot: timeSlot,
-            reason: "관리자 예약 차단",
+            reason: "관리자 차단",
           },
         ]);
         if (error) throw error;
-        toast.warn(`${timeSlot} 슬롯 예약 차단 설정`);
+        toast.warn(`${timeSlot} 슬롯 차단 설정`);
       }
       onRefreshData();
     } catch (err) {
       console.error("Toggle block error:", err);
-      toast.error(`슬롯 차단 변경 실패: ${err.message}`);
+      toast.error(`변경 실패: ${err.message}`);
     }
   };
 
-  // CSV Export with UTF-8 BOM
   const handleExportCSV = () => {
     if (!reservations || reservations.length === 0) {
       toast.info("내보낼 예약 데이터가 없습니다.");
       return;
     }
 
-    const headers = ["ID", "학번", "이름", "인증번호", "부스/실험실", "날짜", "시간대", "생성시각"];
+    const headers = ["ID", "학번", "이름", "인증번호", "부스명", "날짜", "시간대", "생성시각"];
     const rows = reservations.map((r) => [
       r.id,
       `"${r.student_id}"`,
@@ -235,7 +221,6 @@ export const AdminModal = ({
     toast.success("CSV 파일 다운로드가 완료되었습니다.");
   };
 
-  // Filtered reservations
   const filteredReservations = (reservations || []).filter((r) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
@@ -248,78 +233,79 @@ export const AdminModal = ({
   });
 
   return (
-    <Modal show={show} onHide={onHide} size="xl" centered backdrop="static" className="admin-modal">
-      <Modal.Header closeButton className="bg-dark text-white border-secondary">
-        <Modal.Title className="d-flex align-items-center gap-2">
-          <span>🛠️ 시스템 관리자 모드 (Admin Portal)</span>
+    <Modal show={show} onHide={onHide} size="xl" centered backdrop="static" className="taste-modal">
+      <Modal.Header closeButton className="bg-slate-900 text-white border-slate-800">
+        <Modal.Title className="h6 fw-semibold mb-0">
+          시스템 관리자 포털
         </Modal.Title>
       </Modal.Header>
-      <Modal.Body className="p-4 bg-light">
+      <Modal.Body className="p-4 bg-slate-50">
         {!isAuthenticated ? (
           <Form onSubmit={handleLogin} className="max-w-md mx-auto py-5 text-center">
-            <h4 className="mb-3 fw-bold">관리자 인증</h4>
-            <p className="text-muted mb-4">시크릿 코드를 입력하여 관리자 시스템에 접속하세요.</p>
+            <h5 className="mb-2 fw-semibold text-slate-900">관리자 인증</h5>
+            <p className="text-slate-500 mb-4 text-sm">관리자 비밀번호를 입력해 주세요.</p>
             <Form.Group className="mb-3">
               <Form.Control
                 type="password"
-                placeholder="관리자 암호 입력 (기본: admin1234)"
+                placeholder="비밀번호 입력 (기본: admin1234)"
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 autoFocus
-                className="form-control-lg text-center"
+                className="form-control-taste text-center form-control-lg"
               />
             </Form.Group>
-            <Button type="submit" variant="primary" size="lg" className="w-100">
+            <Button type="submit" variant="primary" className="btn-taste-primary w-100 py-2">
               접속하기
             </Button>
           </Form>
         ) : (
           <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
-            <Nav variant="pills" className="mb-4 bg-white p-2 rounded shadow-sm border gap-2">
+            <Nav variant="pills" className="mb-4 bg-white p-2 rounded-3 border gap-2">
               <Nav.Item>
-                <Nav.Link eventKey="settings">⚙️ 행사 기본 설정</Nav.Link>
+                <Nav.Link eventKey="settings" className="taste-tab-link">행사 설정</Nav.Link>
               </Nav.Item>
               <Nav.Item>
-                <Nav.Link eventKey="booths">🧪 부스/실험실 관리</Nav.Link>
+                <Nav.Link eventKey="booths" className="taste-tab-link">부스 관리</Nav.Link>
               </Nav.Item>
               <Nav.Item>
-                <Nav.Link eventKey="blocking">⏰ 슬롯 차단/블록</Nav.Link>
+                <Nav.Link eventKey="blocking" className="taste-tab-link">슬롯 차단</Nav.Link>
               </Nav.Item>
               <Nav.Item>
-                <Nav.Link eventKey="reservations">
-                  📋 전체 예약자 관리 <Badge bg="primary">{reservations.length}</Badge>
+                <Nav.Link eventKey="reservations" className="taste-tab-link d-flex align-items-center gap-2">
+                  <span>예약자 관리</span>
+                  <Badge bg="secondary" className="font-mono">{reservations.length}</Badge>
                 </Nav.Link>
               </Nav.Item>
             </Nav>
 
-            <Tab.Content className="bg-white p-4 rounded shadow-sm border">
-              {/* TAB 1: EVENT SETTINGS */}
+            <Tab.Content className="bg-white p-4 rounded-3 border">
+              {/* TAB 1 */}
               <Tab.Pane eventKey="settings">
-                <h5 className="fw-bold mb-4 border-bottom pb-2">행사 기본 정보 및 정책 커스터마이징</h5>
+                <h6 className="fw-semibold mb-4 border-bottom pb-2 text-slate-900">행사 기본 정보 및 정책</h6>
                 <Form>
                   <Form.Group className="mb-3">
-                    <Form.Label className="fw-bold">행사 제목</Form.Label>
+                    <Form.Label className="form-label-taste">행사 제목</Form.Label>
                     <Form.Control
                       type="text"
                       value={formSettings.event_title || ""}
                       onChange={(e) => setFormSettings({ ...formSettings, event_title: e.target.value })}
+                      className="form-control-taste"
                     />
                   </Form.Group>
 
                   <Form.Group className="mb-4">
-                    <Form.Label className="fw-bold">행사 운영 날짜 목록</Form.Label>
+                    <Form.Label className="form-label-taste">행사 운영 날짜</Form.Label>
                     <div className="d-flex flex-wrap gap-2 mb-2">
                       {formSettings.event_dates?.map((d) => (
-                        <Badge key={d} bg="secondary" className="p-2 fs-6 d-flex align-items-center gap-2">
+                        <span key={d} className="badge bg-slate-100 text-slate-800 border p-2 fs-6 d-flex align-items-center gap-2">
                           {d}
                           <span
-                            style={{ cursor: "pointer", color: "#ff6b6b" }}
+                            style={{ cursor: "pointer", color: "#ef4444" }}
                             onClick={() => handleRemoveDate(d)}
-                            title="날짜 삭제"
                           >
-                            ✕
+                            ×
                           </span>
-                        </Badge>
+                        </span>
                       ))}
                     </div>
                     <div className="d-flex gap-2 max-w-sm">
@@ -327,8 +313,9 @@ export const AdminModal = ({
                         type="date"
                         value={newDateInput}
                         onChange={(e) => setNewDateInput(e.target.value)}
+                        className="form-control-taste"
                       />
-                      <Button variant="outline-primary" onClick={handleAddDate}>
+                      <Button variant="outline-secondary" size="sm" onClick={handleAddDate}>
                         날짜 추가
                       </Button>
                     </div>
@@ -337,7 +324,7 @@ export const AdminModal = ({
                   <div className="row g-3 mb-3">
                     <div className="col-md-6">
                       <Form.Group>
-                        <Form.Label className="fw-bold">1인당 최대 예약 가능 횟수</Form.Label>
+                        <Form.Label className="form-label-taste">1인당 최대 예약 가능 횟수</Form.Label>
                         <Form.Control
                           type="number"
                           min="1"
@@ -349,12 +336,13 @@ export const AdminModal = ({
                               max_reservations_per_student: parseInt(e.target.value) || 1,
                             })
                           }
+                          className="form-control-taste"
                         />
                       </Form.Group>
                     </div>
                     <div className="col-md-6">
                       <Form.Group>
-                        <Form.Label className="fw-bold">타임슬롯당 최대 정원</Form.Label>
+                        <Form.Label className="form-label-taste">슬롯당 최대 정원</Form.Label>
                         <Form.Control
                           type="number"
                           min="1"
@@ -366,6 +354,7 @@ export const AdminModal = ({
                               max_capacity_per_slot: parseInt(e.target.value) || 1,
                             })
                           }
+                          className="form-control-taste"
                         />
                       </Form.Group>
                     </div>
@@ -374,29 +363,29 @@ export const AdminModal = ({
                   <div className="row g-3 mb-3">
                     <div className="col-md-4">
                       <Form.Group>
-                        <Form.Label className="fw-bold">운영 시작 시간</Form.Label>
+                        <Form.Label className="form-label-taste">시작 시간</Form.Label>
                         <Form.Control
                           type="text"
-                          placeholder="10:00"
                           value={formSettings.start_time || "10:00"}
                           onChange={(e) => setFormSettings({ ...formSettings, start_time: e.target.value })}
+                          className="form-control-taste"
                         />
                       </Form.Group>
                     </div>
                     <div className="col-md-4">
                       <Form.Group>
-                        <Form.Label className="fw-bold">운영 종료 시간</Form.Label>
+                        <Form.Label className="form-label-taste">종료 시간</Form.Label>
                         <Form.Control
                           type="text"
-                          placeholder="16:00"
                           value={formSettings.end_time || "16:00"}
                           onChange={(e) => setFormSettings({ ...formSettings, end_time: e.target.value })}
+                          className="form-control-taste"
                         />
                       </Form.Group>
                     </div>
                     <div className="col-md-4">
                       <Form.Group>
-                        <Form.Label className="fw-bold">슬롯 시간 간격 (분)</Form.Label>
+                        <Form.Label className="form-label-taste">슬롯 간격 (분)</Form.Label>
                         <Form.Select
                           value={formSettings.slot_interval || 20}
                           onChange={(e) =>
@@ -405,54 +394,57 @@ export const AdminModal = ({
                               slot_interval: parseInt(e.target.value),
                             })
                           }
+                          className="form-control-taste"
                         >
-                          <option value={10}>10분 간격</option>
-                          <option value={15}>15분 간격</option>
-                          <option value={20}>20분 간격 (기본)</option>
-                          <option value={30}>30분 간격</option>
-                          <option value={60}>60분 간격</option>
+                          <option value={10}>10분</option>
+                          <option value={15}>15분</option>
+                          <option value={20}>20분</option>
+                          <option value={30}>30분</option>
+                          <option value={60}>60분</option>
                         </Form.Select>
                       </Form.Group>
                     </div>
                   </div>
 
                   <Form.Group className="mb-4">
-                    <Form.Label className="fw-bold">관리자 접속 암호 변경</Form.Label>
+                    <Form.Label className="form-label-taste">관리자 암호 변경</Form.Label>
                     <Form.Control
                       type="text"
                       value={formSettings.admin_passcode || "admin1234"}
                       onChange={(e) => setFormSettings({ ...formSettings, admin_passcode: e.target.value })}
+                      className="form-control-taste"
                     />
                   </Form.Group>
 
-                  <Button variant="primary" size="lg" onClick={handleSaveSettings}>
-                    💾 설정 저장하기
+                  <Button variant="primary" className="btn-taste-primary" onClick={handleSaveSettings}>
+                    설정 저장
                   </Button>
                 </Form>
               </Tab.Pane>
 
-              {/* TAB 2: BOOTHS MANAGER */}
+              {/* TAB 2 */}
               <Tab.Pane eventKey="booths">
-                <h5 className="fw-bold mb-3 border-bottom pb-2">부스 / 실험실 목록 관리</h5>
+                <h6 className="fw-semibold mb-3 border-bottom pb-2 text-slate-900">부스 목록 관리</h6>
 
-                {/* Add new booth form */}
-                <div className="bg-light p-3 rounded border mb-4">
-                  <h6 className="fw-bold mb-3">➕ 새 부스 추가</h6>
+                <div className="bg-slate-50 p-3 rounded-3 border mb-4">
+                  <h6 className="fw-semibold mb-3 text-xs text-slate-600">새 부스 추가</h6>
                   <div className="row g-2 mb-2">
                     <div className="col-md-5">
                       <Form.Control
                         type="text"
-                        placeholder="부스 / 실험실 이름"
+                        placeholder="부스 이름"
                         value={newBoothName}
                         onChange={(e) => setNewBoothName(e.target.value)}
+                        className="form-control-taste"
                       />
                     </div>
                     <div className="col-md-5">
                       <Form.Control
                         type="text"
-                        placeholder="부스 간단 설명"
+                        placeholder="부스 설명"
                         value={newBoothDesc}
                         onChange={(e) => setNewBoothDesc(e.target.value)}
+                        className="form-control-taste"
                       />
                     </div>
                     <div className="col-md-2 d-flex gap-2">
@@ -460,18 +452,17 @@ export const AdminModal = ({
                         type="color"
                         value={newBoothColor}
                         onChange={(e) => setNewBoothColor(e.target.value)}
-                        title="태그 컬러"
+                        className="form-control-taste p-1"
                       />
-                      <Button variant="success" className="w-100" onClick={handleAddBooth}>
+                      <Button variant="primary" className="btn-taste-primary w-100" onClick={handleAddBooth}>
                         추가
                       </Button>
                     </div>
                   </div>
                 </div>
 
-                {/* Booth list table */}
-                <Table responsive hover className="align-middle">
-                  <thead className="table-secondary">
+                <Table responsive hover className="align-middle text-sm">
+                  <thead className="table-light">
                     <tr>
                       <th style={{ width: "50px" }}>#</th>
                       <th>부스 명칭</th>
@@ -484,12 +475,12 @@ export const AdminModal = ({
                     {boothList.map((b, idx) => (
                       <tr key={b.id || idx}>
                         <td>{idx + 1}</td>
-                        <td className="fw-bold">{b.name}</td>
-                        <td className="text-muted">{b.description || "-"}</td>
+                        <td className="fw-medium text-slate-900">{b.name}</td>
+                        <td className="text-slate-500">{b.description || "-"}</td>
                         <td>
                           <span
-                            className="badge p-2"
-                            style={{ backgroundColor: b.color_tag || "#3b82f6", color: "#fff" }}
+                            className="badge px-2 py-1"
+                            style={{ backgroundColor: b.color_tag || "#2563eb", color: "#fff" }}
                           >
                             {b.color_tag}
                           </span>
@@ -509,19 +500,20 @@ export const AdminModal = ({
                 </Table>
               </Tab.Pane>
 
-              {/* TAB 3: SLOT BLOCKING */}
+              {/* TAB 3 */}
               <Tab.Pane eventKey="blocking">
-                <h5 className="fw-bold mb-3 border-bottom pb-2">특정 시간대 예약 차단 (Block)</h5>
-                <Alert variant="info" className="py-2">
-                  클릭 시 해당 슬롯의 예약을 즉시 금지/차단 상태로 변경합니다.
+                <h6 className="fw-semibold mb-3 border-bottom pb-2 text-slate-900">슬롯 예약 차단 설정</h6>
+                <Alert variant="secondary" className="py-2 text-sm bg-slate-100 border text-slate-700">
+                  슬롯을 클릭하면 해당 시간대의 예약을 즉시 금지/차단합니다.
                 </Alert>
 
                 <div className="row g-3 mb-4">
                   <div className="col-md-6">
-                    <Form.Label className="fw-bold">대상 부스 선택</Form.Label>
+                    <Form.Label className="form-label-taste">부스 선택</Form.Label>
                     <Form.Select
                       value={selectedBlockBooth}
                       onChange={(e) => setSelectedBlockBooth(e.target.value)}
+                      className="form-control-taste"
                     >
                       {booths.map((b) => (
                         <option key={b.name} value={b.name}>
@@ -531,10 +523,11 @@ export const AdminModal = ({
                     </Form.Select>
                   </div>
                   <div className="col-md-6">
-                    <Form.Label className="fw-bold">대상 날짜 선택</Form.Label>
+                    <Form.Label className="form-label-taste">날짜 선택</Form.Label>
                     <Form.Select
                       value={selectedBlockDate}
                       onChange={(e) => setSelectedBlockDate(e.target.value)}
+                      className="form-control-taste"
                     >
                       {settings?.event_dates?.map((d) => (
                         <option key={d} value={d}>
@@ -545,9 +538,7 @@ export const AdminModal = ({
                   </div>
                 </div>
 
-                <h6 className="fw-bold mb-2">슬롯 예약 차단 조절</h6>
                 <div className="d-flex flex-wrap gap-2">
-                  {/* Slots list */}
                   {["10:00", "10:20", "10:40", "11:00", "11:20", "11:40", "14:00", "14:20", "14:40", "15:00", "15:20", "15:40"].map((slot) => {
                     const isBlocked = slotBlocks.some(
                       (b) =>
@@ -560,36 +551,37 @@ export const AdminModal = ({
                       <Button
                         key={slot}
                         variant={isBlocked ? "danger" : "outline-secondary"}
-                        className="px-3 py-2"
+                        className="px-3 py-2 text-sm"
                         onClick={() => handleToggleSlotBlock(slot)}
                       >
-                        {slot} {isBlocked ? "🔒 (차단됨)" : "✅ (가능)"}
+                        {slot} {isBlocked ? "(차단됨)" : "(가능)"}
                       </Button>
                     );
                   })}
                 </div>
               </Tab.Pane>
 
-              {/* TAB 4: RESERVATION MANAGEMENT */}
+              {/* TAB 4 */}
               <Tab.Pane eventKey="reservations">
                 <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 className="fw-bold mb-0">전체 예약 현황 목록</h5>
-                  <Button variant="success" onClick={handleExportCSV}>
-                    📥 CSV 엑셀 다운로드
+                  <h6 className="fw-semibold mb-0 text-slate-900">전체 예약 현황</h6>
+                  <Button variant="outline-primary" size="sm" className="btn-taste-outline" onClick={handleExportCSV}>
+                    CSV 엑셀 다운로드
                   </Button>
                 </div>
 
                 <div className="mb-3">
                   <Form.Control
                     type="text"
-                    placeholder="학번, 학생 이름, 부스명으로 검색..."
+                    placeholder="학번, 이름, 부스명으로 검색..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="form-control-taste"
                   />
                 </div>
 
-                <Table responsive hover className="align-middle fs-6">
-                  <thead className="table-dark">
+                <Table responsive hover className="align-middle text-sm">
+                  <thead className="table-light">
                     <tr>
                       <th>#</th>
                       <th>학번</th>
@@ -604,7 +596,7 @@ export const AdminModal = ({
                   <tbody>
                     {filteredReservations.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="text-center py-4 text-muted">
+                        <td colSpan="8" className="text-center py-4 text-slate-400">
                           예약 데이터가 존재하지 않습니다.
                         </td>
                       </tr>
@@ -612,11 +604,11 @@ export const AdminModal = ({
                       filteredReservations.map((r, idx) => (
                         <tr key={r.id}>
                           <td>{idx + 1}</td>
-                          <td className="fw-bold">{r.student_id}</td>
+                          <td className="fw-medium font-mono">{r.student_id}</td>
                           <td>{r.student_name}</td>
                           <td>{r.auth_number}</td>
                           <td>
-                            <Badge bg="primary">{r.booth_id}</Badge>
+                            <Badge bg="light" className="text-slate-800 border">{r.booth_id}</Badge>
                           </td>
                           <td>{r.date}</td>
                           <td>{r.time_slot}</td>
@@ -640,7 +632,7 @@ export const AdminModal = ({
         )}
       </Modal.Body>
       <Modal.Footer className="bg-white">
-        <Button variant="secondary" onClick={onHide}>
+        <Button variant="light" onClick={onHide}>
           닫기
         </Button>
       </Modal.Footer>
