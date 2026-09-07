@@ -28,6 +28,7 @@ const Timetable = ({
   slotBlocks = [],
   onCardClick,
   isAdminMode = false,
+  isLoading = false,
 }) => {
   // Safe Number Casting to guarantee exact numeric comparisons
   const maxCapacity = Number(maxCapacityPerSlot) || 1;
@@ -88,10 +89,59 @@ const Timetable = ({
     }
   };
 
+  // Loading Skeleton State
+  if (isLoading) {
+    return (
+      <div className="timetable-wrapper">
+        <div className="mb-3 pb-3 border-bottom">
+          <div className="skeleton skeleton-title mb-2" style={{ width: "200px", height: "26px" }} />
+          <div className="skeleton skeleton-text" style={{ width: "320px", height: "16px" }} />
+        </div>
+        <div className="row row-cols-2 row-cols-sm-3 row-cols-lg-3 g-3">
+          {[1, 2, 3, 4, 5, 6].map((idx) => (
+            <div key={idx} className="col">
+              <div className="card slot-card-taste h-100 p-3 d-flex flex-column justify-content-between" style={{ minHeight: "96px" }}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div className="skeleton" style={{ width: "65px", height: "22px", borderRadius: "6px" }} />
+                  <div className="skeleton" style={{ width: "12px", height: "12px", borderRadius: "50%" }} />
+                </div>
+                <div className="d-flex justify-content-between align-items-center">
+                  <div className="skeleton" style={{ width: "70px", height: "18px", borderRadius: "4px" }} />
+                  <div className="skeleton" style={{ width: "24px", height: "14px", borderRadius: "4px" }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Empty State
+  if (!timeSlots || timeSlots.length === 0) {
+    return (
+      <div className="timetable-wrapper">
+        <div className="mb-3 pb-3 border-bottom">
+          <h4 className="fw-semibold mb-1 text-slate-900">
+            {selectedLab} <span className="text-slate-500 fs-6 fw-normal">예약 시간표</span>
+          </h4>
+        </div>
+        <div className="text-center py-5 bg-slate-50 rounded-3 border border-dashed my-3">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <p className="text-slate-600 fw-medium mb-1">운영 가능한 시간표 슬롯이 없습니다.</p>
+          <small className="text-slate-500">관리자 설정에서 운영 시간을 확인해 주세요.</small>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="timetable-wrapper">
       {/* Main Header with Admin-configured Booth Description */}
-      <div className="mb-3 pb-3 border-bottom">
+      <div className="mb-3 pb-3 border-bottom sticky-timetable-header">
         <h4 className="fw-semibold mb-1 text-slate-900">
           {selectedLab} <span className="text-slate-500 fs-6 fw-normal">예약 시간표</span>
         </h4>
@@ -117,19 +167,36 @@ const Timetable = ({
           );
 
           const status = getCardStatus(reservationsForSlot, isBlocked);
+          const remainingSlots = maxCapacity - reservationsForSlot.length;
+
+          // Accessibility label
+          let a11yLabel = `${timeSlot}, `;
+          if (isBlocked) a11yLabel += "예약 차단됨";
+          else if (status === "mine") a11yLabel += "내가 예약한 슬롯";
+          else if (status === "full") a11yLabel += "정원 마감";
+          else a11yLabel += `예약 가능, 남은 자리 ${remainingSlots}명`;
 
           return (
             <div key={timeSlot} className="col">
               <div
+                role="button"
+                tabIndex={0}
+                aria-label={a11yLabel}
                 className={`card slot-card-taste h-100 slot-status-${status}`}
                 onClick={() => handleCardClick(timeSlot, isBlocked, reservationsForSlot)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleCardClick(timeSlot, isBlocked, reservationsForSlot);
+                  }
+                }}
               >
                 <div className="card-body p-3 d-flex flex-column justify-content-between">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <span className="slot-time-text">
                       {timeSlot}
                     </span>
-                    <div className="d-flex gap-1 align-items-center">
+                    <div className="d-flex gap-1 align-items-center" aria-hidden="true">
                       {Array.from({ length: maxCapacity }).map((_, i) => {
                         const reservation = reservationsForSlot[i];
                         const isUserMine =
@@ -147,10 +214,10 @@ const Timetable = ({
 
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     {getStatusBadge(status, reservationsForSlot.length, maxCapacity)}
-                    {/* Fix #6: Show remaining/total slots */}
+                    {/* Remaining/total slots */}
                     {status !== "blocked" && status !== "disabled" && (
-                      <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontVariantNumeric: "tabular-nums" }}>
-                        {maxCapacity - reservationsForSlot.length}/{maxCapacity}
+                      <span style={{ fontSize: "0.75rem", color: "#64748b", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>
+                        {remainingSlots}/{maxCapacity}석
                       </span>
                     )}
                   </div>

@@ -79,6 +79,12 @@ function App() {
   const [cancelAuthPassword, setCancelAuthPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [isMobileView, setIsMobileView] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
+
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
@@ -87,6 +93,14 @@ function App() {
 
   const channelsRef = useRef([]);
   const publicUrl = process.env.PUBLIC_URL || "";
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -135,15 +149,25 @@ function App() {
       if (!blockErr && blockData) {
         setSlotBlocks(blockData);
       }
+      setFetchError(null);
     } catch (err) {
       console.warn("Error fetching reservations or blocks:", err);
+      setFetchError("데이터 동기화 중 일시적 오류가 발생했습니다.");
     }
   }, []);
 
-  const handleRefreshAll = useCallback(() => {
-    fetchSettings();
-    fetchBooths();
-    fetchReservationsAndBlocks();
+  const handleRefreshAll = useCallback(async () => {
+    try {
+      await Promise.all([
+        fetchSettings(),
+        fetchBooths(),
+        fetchReservationsAndBlocks(),
+      ]);
+    } catch (e) {
+      console.warn("Refresh error:", e);
+    } finally {
+      setInitialLoading(false);
+    }
   }, [fetchSettings, fetchBooths, fetchReservationsAndBlocks]);
 
   useEffect(() => {
@@ -335,7 +359,12 @@ function App() {
 
   return (
     <div className="app-main-wrapper bg-slate min-vh-100 d-flex flex-column">
-      <ToastContainer transition={Slide} position="top-right" autoClose={3000} />
+      <ToastContainer
+        transition={Slide}
+        position={isMobileView ? "bottom-center" : "top-right"}
+        autoClose={2800}
+        style={{ marginBottom: isMobileView ? "85px" : "0px" }}
+      />
 
       {/* HEADER BAR */}
       <header className="taste-header sticky-top border-bottom py-3">
@@ -365,20 +394,49 @@ function App() {
             </div>
           </div>
 
-          <Button
-            variant="outline-secondary"
-            size="sm"
-            className="btn-taste-outline d-flex align-items-center gap-2 rounded-pill px-3"
-            onClick={() => setShowAdminModal(true)}
-          >
-            <SettingsIcon />
-            <span className="d-none d-sm-inline font-medium">관리자</span>
-          </Button>
+          <div className="d-flex align-items-center gap-2">
+            {studentId ? (
+              <div
+                className="user-header-chip d-none d-sm-inline-flex"
+                style={{ cursor: "pointer" }}
+                onClick={() => setMobileTab("info")}
+                title="클릭하여 예약자 정보 수정"
+              >
+                <UserIcon />
+                <span>{studentName || "예약자"} ({studentId})</span>
+              </div>
+            ) : (
+              <span className="text-slate-500 text-xs d-none d-md-inline">
+                예약자 미입력
+              </span>
+            )}
+
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              className="btn-taste-outline d-flex align-items-center gap-2 rounded-pill px-3"
+              onClick={() => setShowAdminModal(true)}
+              title="관리자 모드 (Ctrl+Shift+A)"
+            >
+              <SettingsIcon />
+              <span className="d-none d-sm-inline font-medium">관리자</span>
+            </Button>
+          </div>
         </div>
       </header>
 
       {/* MAIN CONTENT AREA */}
       <main className="container-fluid max-w-7xl py-4 flex-grow-1 app-main-content-mobile">
+        
+        {/* Error Alert if any */}
+        {fetchError && (
+          <div className="alert alert-warning py-2.5 px-3 text-sm d-flex justify-content-between align-items-center mb-3 rounded-3">
+            <span>⚠️ {fetchError}</span>
+            <Button variant="outline-dark" size="sm" className="text-xs py-1 px-2.5" onClick={handleRefreshAll}>
+              새로고침
+            </Button>
+          </div>
+        )}
         
         {/* ========================================================
             DESKTOP VIEW (≥ 992px): Classic 3-Column Grid
@@ -461,6 +519,7 @@ function App() {
                   slotBlocks={slotBlocks}
                   onCardClick={handleTimeSlotClick}
                   isAdminMode={false}
+                  isLoading={initialLoading}
                 />
               </div>
             </div>
@@ -510,6 +569,30 @@ function App() {
           {/* TAB 1: TIMETABLE VIEW */}
           {mobileTab === "timetable" && (
             <div className="mobile-tab-view animate-fade-in">
+              
+              {/* First-time Onboarding Banner if studentId not yet filled */}
+              {!studentId && (
+                <div
+                  className="onboarding-banner"
+                  onClick={() => setMobileTab("info")}
+                  style={{ cursor: "pointer" }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter") setMobileTab("info"); }}
+                >
+                  <div className="d-flex align-items-center gap-2">
+                    <span style={{ fontSize: "1.25rem" }}>👋</span>
+                    <div>
+                      <div className="fw-semibold text-slate-900 text-xs">예약 전 필수 확인</div>
+                      <div className="text-slate-600 text-xs">학번과 성함을 입력하면 슬롯을 즉시 신청할 수 있습니다.</div>
+                    </div>
+                  </div>
+                  <span className="btn btn-sm btn-primary px-2.5 py-1 text-xs fw-semibold flex-shrink-0" style={{ borderRadius: "6px" }}>
+                    입력하기
+                  </span>
+                </div>
+              )}
+
               {/* Compact Date Selector */}
               <div className="taste-card p-3 mb-3">
                 <div className="d-flex align-items-center justify-content-between mb-2">
@@ -546,11 +629,13 @@ function App() {
 
               {/* Compact Booth Pills */}
               <div className="taste-card p-3 mb-3">
-                <LabsList
-                  booths={booths}
-                  selectedLab={selectedLab}
-                  onLabSelect={(labName) => setSelectedLab(labName)}
-                />
+                <div className="booth-pill-scroll-wrapper">
+                  <LabsList
+                    booths={booths}
+                    selectedLab={selectedLab}
+                    onLabSelect={(labName) => setSelectedLab(labName)}
+                  />
+                </div>
               </div>
 
               {/* Main Timetable Card */}
@@ -570,6 +655,7 @@ function App() {
                   slotBlocks={slotBlocks}
                   onCardClick={handleTimeSlotClick}
                   isAdminMode={false}
+                  isLoading={initialLoading}
                 />
               </div>
             </div>

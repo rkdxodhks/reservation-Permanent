@@ -41,18 +41,30 @@ export const LabsList = ({ booths = [], selectedLab, onLabSelect }) => {
 
 export const MyReservations = ({
   studentId,
-  reservations = [],  // Fix #7: accept flat array instead of reservationsByDate object
+  reservations = [],
   currentReservationCount = 0,
   maxReservationsPerStudent = 2,
   onReservationClick,
 }) => {
-  // Fix #7: show ALL reservations for this student across all dates
+  // Show ALL reservations for this student across all dates, sorted by date and time
   const myReservations = studentId
-    ? reservations.filter((r) => r.student_id === studentId)
+    ? reservations
+        .filter((r) => r.student_id === studentId)
+        .sort((a, b) => {
+          if (a.date !== b.date) return a.date.localeCompare(b.date);
+          return a.time_slot.localeCompare(b.time_slot);
+        })
     : [];
 
   const maxCount = Number(maxReservationsPerStudent) || 2;
   const isAtLimit = currentReservationCount >= maxCount;
+
+  // Group by date
+  const groupedReservations = myReservations.reduce((acc, res) => {
+    if (!acc[res.date]) acc[res.date] = [];
+    acc[res.date].push(res);
+    return acc;
+  }, {});
 
   return (
     <div className="taste-card p-4 mt-3">
@@ -61,7 +73,6 @@ export const MyReservations = ({
           나의 예약 현황
         </h6>
         {studentId && (
-          // Fix #3: use inline styles instead of Tailwind classes that don't apply in Bootstrap context
           <span
             style={{
               display: "inline-block",
@@ -79,37 +90,55 @@ export const MyReservations = ({
       </div>
 
       {!studentId ? (
-        <div className="text-center py-3 text-slate-400 bg-slate-50 rounded border border-dashed">
-          <small>학번을 입력하면 내 예약 내역이 표시됩니다.</small>
+        <div className="text-center py-4 text-slate-500 bg-slate-50 rounded-3 border border-dashed">
+          <small className="d-block mb-1 font-medium text-slate-700">등록된 학번이 없습니다.</small>
+          <small className="text-slate-500 text-xs">학번을 입력하면 신청한 예약 내역이 표시됩니다.</small>
         </div>
       ) : (
         <>
           {myReservations.length > 0 ? (
-            <div className="d-flex flex-column gap-2">
-              {myReservations.map((reservation) => (
-                <div
-                  key={reservation.id}
-                  className="my-res-row p-2 border rounded-3 d-flex justify-content-between align-items-center bg-slate-50"
-                  onClick={() => onReservationClick(reservation)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className="overflow-hidden me-2">
-                    <div className="fw-medium text-slate-900 text-truncate text-sm">
-                      {reservation.booth_id}
-                    </div>
-                    <div className="text-slate-500 text-xs">
-                      {reservation.date} · {reservation.time_slot}
-                    </div>
+            <div className="d-flex flex-column gap-3">
+              {Object.entries(groupedReservations).map(([date, resList]) => (
+                <div key={date}>
+                  <div className="text-xs fw-semibold text-slate-600 mb-1.5 px-1 d-flex align-items-center gap-1">
+                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#3b82f6" }} />
+                    {date}
                   </div>
-                  <button className="btn btn-outline-danger btn-sm shrink-0 rounded-2 text-xs px-2 py-1">
-                    취소
-                  </button>
+                  <div className="d-flex flex-column gap-2">
+                    {resList.map((reservation) => (
+                      <div
+                        key={reservation.id}
+                        className="my-res-row p-2.5 border rounded-3 d-flex justify-content-between align-items-center bg-slate-50 hover-bg-slate-100 transition-all"
+                        onClick={() => onReservationClick(reservation)}
+                        style={{ cursor: "pointer", transition: "background-color 0.15s ease" }}
+                        title="클릭하여 예약 취소"
+                      >
+                        <div className="overflow-hidden me-2">
+                          <div className="fw-semibold text-slate-900 text-truncate text-sm">
+                            {reservation.booth_id}
+                          </div>
+                          <div className="text-slate-600 text-xs mt-0.5">
+                            🕒 {reservation.time_slot}
+                          </div>
+                        </div>
+                        <button className="btn btn-outline-danger btn-sm shrink-0 rounded-2 text-xs px-2.5 py-1">
+                          취소
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
+
+              <div className="bg-blue-50 p-2.5 rounded-2 border border-blue-100 text-center mt-1">
+                <small className="text-slate-700 text-xs" style={{ fontSize: "0.75rem" }}>
+                  💡 행사 당일 부스 입장 시 위 예약 내역을 제시해 주세요.
+                </small>
+              </div>
             </div>
           ) : (
-            <div className="text-center py-3 text-slate-400 bg-slate-50 rounded text-sm">
-              신청한 예약이 없습니다.
+            <div className="text-center py-4 text-slate-500 bg-slate-50 rounded-3 text-sm border border-dashed">
+              신청한 예약 내역이 없습니다.
             </div>
           )}
         </>
