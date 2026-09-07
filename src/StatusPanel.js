@@ -139,7 +139,7 @@ export const MyReservations = ({
                             borderColor: "var(--slate-200)",
                           }}
                         >
-                          <div className="overflow-hidden me-3 flex-grow-1">
+                          <div className="overflow-hidden me-3 flex-grow-1" style={{ minWidth: 0 }}>
                             {/* Booth Title with color dot and good space */}
                             <div className="d-flex align-items-center gap-2 mb-2">
                               <span
@@ -165,10 +165,16 @@ export const MyReservations = ({
                             </div>
                           </div>
 
-                          {/* Cancel button with comfortable hit-target */}
+                          {/* Cancel button with guaranteed horizontal layout & comfortable hit-target */}
                           <button
                             type="button"
-                            className="btn btn-taste-outline-danger shrink-0 px-3 py-1.5 text-xs fw-medium"
+                            className="btn btn-taste-outline-danger flex-shrink-0 px-3 py-1.5 text-xs fw-medium"
+                            style={{
+                              whiteSpace: "nowrap",
+                              wordBreak: "keep-all",
+                              flexShrink: 0,
+                              minWidth: "54px",
+                            }}
                             onClick={(e) => {
                               e.stopPropagation();
                               onReservationClick(reservation);

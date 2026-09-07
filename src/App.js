@@ -406,7 +406,8 @@ function App() {
         autoClose={2600}
         newestOnTop
         closeOnClick
-        pauseOnHover
+        pauseOnHover={false}
+        pauseOnFocusLoss={false}
         className={`taste-toast-container device-${deviceMode}`}
       />
 
@@ -910,18 +911,18 @@ function App() {
           </div>
         </Modal.Header>
 
-        <Modal.Body className="pt-2 pb-4">
+        <Modal.Body className="pt-2 pb-3">
           {modalContext?.type === "confirm" ? (
             <div>
-              {/* Spec Sheet Table with generous padding */}
-              <div className="taste-card p-3.5 mb-4 bg-slate-50">
-                <div className="d-flex justify-content-between align-items-center py-2.5 px-1 border-bottom text-xs">
+              {/* Spec Sheet Table with generous padding & breathing room */}
+              <div className="taste-modal-spec-sheet mb-4">
+                <div className="taste-modal-spec-row">
                   <span className="text-slate-500">체험 부스</span>
-                  <span className="fw-medium text-slate-900 d-flex align-items-center gap-2">
+                  <span className="fw-semibold text-slate-900 d-flex align-items-center gap-2">
                     <span
                       style={{
-                        width: "7px",
-                        height: "7px",
+                        width: "8px",
+                        height: "8px",
                         borderRadius: "50%",
                         backgroundColor: booths.find((b) => b.name === modalContext?.lab)?.color_tag || "#2563eb",
                         flexShrink: 0,
@@ -931,14 +932,14 @@ function App() {
                   </span>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center py-2.5 px-1 border-bottom text-xs">
+                <div className="taste-modal-spec-row">
                   <span className="text-slate-500">행사 날짜</span>
                   <span className="fw-medium text-slate-900 font-mono">
                     {modalContext?.date}
                   </span>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center py-2.5 px-1 border-bottom text-xs">
+                <div className="taste-modal-spec-row">
                   <span className="text-slate-500">예약 시간</span>
                   <span className="fw-medium text-slate-900 font-mono d-flex align-items-center gap-1.5">
                     <ClockIcon />
@@ -946,7 +947,7 @@ function App() {
                   </span>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center pt-2.5 px-1 text-xs">
+                <div className="taste-modal-spec-row">
                   <span className="text-slate-500">신청자 정보</span>
                   <span className="fw-medium text-slate-900 font-mono">
                     {studentName} ({studentId})
@@ -954,21 +955,21 @@ function App() {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500 mb-0 text-center" style={{ lineHeight: "1.5" }}>
+              <p className="text-xs text-slate-500 mb-3 text-center" style={{ lineHeight: "1.6" }}>
                 예약 확정 후 취소 시에는 설정하신 비밀번호가 확인됩니다.
               </p>
             </div>
           ) : (
             <div>
-              {/* Spec Sheet Table with generous padding */}
-              <div className="taste-card p-3.5 mb-4 bg-slate-50">
-                <div className="d-flex justify-content-between align-items-center py-2.5 px-1 border-bottom text-xs">
+              {/* Spec Sheet Table with generous padding & breathing room */}
+              <div className="taste-modal-spec-sheet mb-4">
+                <div className="taste-modal-spec-row">
                   <span className="text-slate-500">취소 대상 부스</span>
-                  <span className="fw-medium text-slate-900 d-flex align-items-center gap-2">
+                  <span className="fw-semibold text-slate-900 d-flex align-items-center gap-2">
                     <span
                       style={{
-                        width: "7px",
-                        height: "7px",
+                        width: "8px",
+                        height: "8px",
                         borderRadius: "50%",
                         backgroundColor: booths.find((b) => b.name === modalContext?.lab)?.color_tag || "#e11d48",
                         flexShrink: 0,
@@ -978,14 +979,14 @@ function App() {
                   </span>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center py-2.5 px-1 border-bottom text-xs">
+                <div className="taste-modal-spec-row">
                   <span className="text-slate-500">행사 날짜</span>
                   <span className="fw-medium text-slate-900 font-mono">
                     {modalContext?.date}
                   </span>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center py-2.5 px-1 border-bottom text-xs">
+                <div className="taste-modal-spec-row">
                   <span className="text-slate-500">예약 시간</span>
                   <span className="fw-medium text-slate-900 font-mono d-flex align-items-center gap-1.5">
                     <ClockIcon />
@@ -993,7 +994,7 @@ function App() {
                   </span>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center pt-2.5 px-1 text-xs">
+                <div className="taste-modal-spec-row">
                   <span className="text-slate-500">신청자 정보</span>
                   <span className="fw-medium text-slate-900 font-mono">
                     {studentName || "본인"} ({studentId || "학번"})
@@ -1002,13 +1003,13 @@ function App() {
               </div>
 
               {/* Minimal Warning Text */}
-              <div className="d-flex align-items-center gap-2 mb-3.5 text-xs text-rose-600 bg-rose-50 px-3 py-2 rounded-2 border border-rose-100">
+              <div className="d-flex align-items-center gap-2 mb-3.5 text-xs text-rose-600 bg-rose-50 px-3 py-2.5 rounded-2 border border-rose-100">
                 <AlertTriangleIcon />
                 <span>취소 즉시 해당 슬롯은 다른 사용자가 예약할 수 있게 개방됩니다.</span>
               </div>
 
               {/* Verification Password Input */}
-              <Form.Group className="text-start">
+              <Form.Group className="text-start mb-2">
                 <div className="d-flex justify-content-between align-items-center mb-1.5">
                   <Form.Label className="form-label-taste mb-0 text-xs fw-medium">
                     취소 비밀번호
@@ -1033,10 +1034,11 @@ function App() {
           )}
         </Modal.Body>
 
-        <Modal.Footer className="border-top-0 d-flex justify-content-end gap-2 pt-2 pb-4">
+        <Modal.Footer className="border-top-0 d-flex justify-content-center align-items-center gap-3 pt-2 pb-4">
           <Button
             variant="outline-secondary"
-            className="btn-taste-outline px-3.5 py-2 text-xs"
+            className="btn-taste-outline px-4 py-2 text-xs fw-semibold"
+            style={{ minWidth: "115px", borderRadius: "8px" }}
             onClick={() => setShowReservationModal(false)}
             disabled={loading}
           >
@@ -1046,7 +1048,8 @@ function App() {
           {modalContext?.type === "confirm" ? (
             <Button
               variant="primary"
-              className="btn-taste-primary px-3 text-xs"
+              className="btn-taste-primary px-4 py-2 text-xs fw-semibold"
+              style={{ minWidth: "115px", borderRadius: "8px" }}
               onClick={handleConfirmReservation}
               disabled={loading}
             >
@@ -1055,7 +1058,8 @@ function App() {
           ) : (
             <Button
               variant="danger"
-              className="btn-taste-danger px-3 text-xs"
+              className="btn-taste-danger px-4 py-2 text-xs fw-semibold"
+              style={{ minWidth: "115px", borderRadius: "8px" }}
               onClick={handleConfirmCancel}
               disabled={loading || !cancelAuthPassword}
             >
