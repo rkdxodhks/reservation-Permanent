@@ -307,6 +307,20 @@ function App() {
     setLoading(true);
 
     try {
+      // Guard: Check if slot is blocked by admin
+      const isSlotBlocked = slotBlocks.some(
+        (b) =>
+          b.booth_id === modalContext.lab &&
+          b.date === modalContext.date &&
+          b.time_slot === modalContext.timeSlot
+      );
+      if (isSlotBlocked) {
+        toast.error("해당 시간대는 관리자에 의해 예약이 차단되어 있습니다.");
+        setLoading(false);
+        setShowReservationModal(false);
+        return;
+      }
+
       const userResCount = reservations.filter((r) => r.student_id === studentId).length;
       const maxReservationsLimit = Number(settings.max_reservations_per_student) || 2;
       if (userResCount >= maxReservationsLimit) {
