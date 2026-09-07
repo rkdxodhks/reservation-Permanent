@@ -42,6 +42,7 @@ export const LabsList = ({ booths = [], selectedLab, onLabSelect }) => {
 export const MyReservations = ({
   studentId,
   reservations = [],
+  booths = [],
   currentReservationCount = 0,
   maxReservationsPerStudent = 2,
   onReservationClick,
@@ -69,20 +70,13 @@ export const MyReservations = ({
   return (
     <div className="taste-card p-4 mt-3">
       <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-        <h6 className="fw-semibold mb-0 text-slate-900">
-          나의 예약 현황
+        <h6 className="fw-semibold mb-0 text-slate-900 d-flex align-items-center gap-2">
+          <span>나의 예약 현황</span>
         </h6>
         {studentId && (
           <span
-            style={{
-              display: "inline-block",
-              padding: "0.2rem 0.6rem",
-              borderRadius: "9999px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              backgroundColor: isAtLimit ? "#ffe4e6" : "#dbeafe",
-              color: isAtLimit ? "#be123c" : "#1e40af",
-            }}
+            className={`taste-badge ${isAtLimit ? "taste-badge-danger" : "taste-badge-primary"}`}
+            style={{ fontWeight: 600, fontSize: "0.75rem" }}
           >
             {currentReservationCount} / {maxCount} 회
           </span>
@@ -100,38 +94,66 @@ export const MyReservations = ({
             <div className="d-flex flex-column gap-3">
               {Object.entries(groupedReservations).map(([date, resList]) => (
                 <div key={date}>
-                  <div className="text-xs fw-semibold text-slate-600 mb-1.5 px-1 d-flex align-items-center gap-1">
+                  <div className="text-xs fw-semibold text-slate-600 mb-2 px-1 d-flex align-items-center gap-1.5">
                     <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#3b82f6" }} />
-                    {date}
+                    <span>{date}</span>
                   </div>
                   <div className="d-flex flex-column gap-2">
-                    {resList.map((reservation) => (
-                      <div
-                        key={reservation.id}
-                        className="my-res-row p-2.5 border rounded-3 d-flex justify-content-between align-items-center bg-slate-50 hover-bg-slate-100 transition-all"
-                        onClick={() => onReservationClick(reservation)}
-                        style={{ cursor: "pointer", transition: "background-color 0.15s ease" }}
-                        title="클릭하여 예약 취소"
-                      >
-                        <div className="overflow-hidden me-2">
-                          <div className="fw-semibold text-slate-900 text-truncate text-sm">
-                            {reservation.booth_id}
+                    {resList.map((reservation) => {
+                      const matchedBooth = booths.find((b) => b.name === reservation.booth_id);
+                      const boothColor = matchedBooth?.color_tag || "#2563eb";
+
+                      return (
+                        <div
+                          key={reservation.id}
+                          className="reservation-ticket-card d-flex justify-content-between align-items-center"
+                          onClick={() => onReservationClick(reservation)}
+                          style={{ cursor: "pointer", borderLeft: `3px solid ${boothColor}` }}
+                          title="클릭하여 예약 상세 확인 및 취소"
+                        >
+                          <div className="overflow-hidden me-2">
+                            <div className="d-flex align-items-center gap-1.5 mb-1">
+                              <span
+                                style={{
+                                  width: "7px",
+                                  height: "7px",
+                                  borderRadius: "50%",
+                                  backgroundColor: boothColor,
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span className="fw-semibold text-slate-900 text-truncate text-sm">
+                                {reservation.booth_id}
+                              </span>
+                            </div>
+                            <div className="d-flex align-items-center gap-2">
+                              <span className="badge bg-slate-100 text-slate-700 font-mono text-xs px-2 py-0.5 rounded">
+                                {reservation.time_slot}
+                              </span>
+                              <span className="text-slate-500 text-xs">
+                                본인 신청
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-slate-600 text-xs mt-0.5">
-                            🕒 {reservation.time_slot}
-                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-taste-outline-danger btn-sm shrink-0 px-2.5 py-1 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onReservationClick(reservation);
+                            }}
+                          >
+                            취소
+                          </button>
                         </div>
-                        <button className="btn btn-outline-danger btn-sm shrink-0 rounded-2 text-xs px-2.5 py-1">
-                          취소
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
 
               <div className="bg-blue-50 p-2.5 rounded-2 border border-blue-100 text-center mt-1">
-                <small className="text-slate-700 text-xs" style={{ fontSize: "0.75rem" }}>
+                <small className="text-slate-700 text-xs">
                   💡 행사 당일 부스 입장 시 위 예약 내역을 제시해 주세요.
                 </small>
               </div>

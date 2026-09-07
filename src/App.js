@@ -553,6 +553,7 @@ function App() {
               <MyReservations
                 studentId={studentId}
                 reservations={reservations}
+                booths={booths}
                 currentReservationCount={currentReservationCount}
                 maxReservationsPerStudent={Number(settings.max_reservations_per_student) || 2}
                 onReservationClick={handleMyReservationClick}
@@ -736,6 +737,7 @@ function App() {
               <MyReservations
                 studentId={studentId}
                 reservations={reservations}
+                booths={booths}
                 currentReservationCount={currentReservationCount}
                 maxReservationsPerStudent={Number(settings.max_reservations_per_student) || 2}
                 onReservationClick={handleMyReservationClick}
@@ -840,63 +842,152 @@ function App() {
       </Modal>
 
       {/* RESERVATION CONFIRM / CANCEL MODAL */}
+      {/* RESERVATION CONFIRM / CANCEL MODAL */}
       <Modal
         show={showReservationModal}
         onHide={() => setShowReservationModal(false)}
         centered
         className="taste-modal"
       >
-        <Modal.Header closeButton className="border-bottom-0">
-          <Modal.Title className="h6 fw-semibold text-slate-900">
-            {modalContext?.type === "cancel" ? "예약 취소 확인" : "예약 신청 확인"}
-          </Modal.Title>
+        <Modal.Header closeButton className="border-bottom-0 pb-1">
+          <div className="d-flex align-items-center gap-2">
+            <span
+              className={`taste-badge ${
+                modalContext?.type === "cancel" ? "taste-badge-danger" : "taste-badge-primary"
+              }`}
+            >
+              {modalContext?.type === "cancel" ? "예약 취소" : "신청 확인"}
+            </span>
+            <Modal.Title className="h6 fw-semibold text-slate-900 mb-0">
+              {modalContext?.type === "cancel" ? "예약 취소 확인" : "체험부스 예약 신청"}
+            </Modal.Title>
+          </div>
         </Modal.Header>
-        <Modal.Body className="py-3">
+
+        <Modal.Body className="pt-2 pb-3">
           {modalContext?.type === "confirm" ? (
             <div>
-              <h5 className="fw-semibold mb-3 text-slate-900">{modalContext.lab}</h5>
-              <div className="bg-slate-50 p-3 rounded-3 mb-3 border text-start">
-                <p className="mb-1 text-slate-700"><strong>날짜:</strong> {modalContext.date}</p>
-                <p className="mb-1 text-slate-700"><strong>시간:</strong> {modalContext.timeSlot}</p>
-                <p className="mb-0 text-slate-700"><strong>신청자:</strong> {studentName} ({studentId})</p>
+              {/* Unified Ticket Card matching MyReservations style */}
+              <div className="reservation-ticket-card primary-tint mb-3">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: booths.find((b) => b.name === modalContext?.lab)?.color_tag || "#2563eb",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <h6 className="fw-semibold text-slate-900 mb-0">{modalContext?.lab}</h6>
+                </div>
+
+                <div className="d-flex flex-wrap gap-2 text-xs mb-2.5">
+                  <span className="badge bg-white text-slate-700 border font-mono px-2 py-1 rounded">
+                    📅 {modalContext?.date}
+                  </span>
+                  <span className="badge bg-white text-slate-700 border font-mono px-2 py-1 rounded">
+                    🕒 {modalContext?.timeSlot}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-top text-xs text-slate-600 d-flex justify-content-between align-items-center">
+                  <span>신청자: <strong>{studentName}</strong> ({studentId})</span>
+                  <span className="taste-badge taste-badge-emerald">신청 가능</span>
+                </div>
               </div>
-              <p className="small text-slate-500 mb-0">위 정보로 예약을 진행하시겠습니까?</p>
+
+              <p className="small text-slate-500 mb-0 text-center">
+                위 일정으로 예약을 신청하시겠습니까? 예약 후 취소 시 설정하신 비밀번호가 사용됩니다.
+              </p>
             </div>
           ) : (
             <div>
-              <h5 className="fw-semibold mb-3 text-slate-900">예약을 취소하시겠습니까?</h5>
-              <div className="bg-slate-50 p-3 rounded-3 mb-3 border text-start">
-                <p className="mb-1 text-slate-700"><strong>부스:</strong> {modalContext?.lab}</p>
-                <p className="mb-1 text-slate-700"><strong>날짜:</strong> {modalContext?.date}</p>
-                <p className="mb-0 text-slate-700"><strong>시간:</strong> {modalContext?.timeSlot}</p>
+              {/* Unified Ticket Card matching MyReservations style */}
+              <div className="reservation-ticket-card danger-tint mb-3">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: booths.find((b) => b.name === modalContext?.lab)?.color_tag || "#e11d48",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <h6 className="fw-semibold text-slate-900 mb-0">{modalContext?.lab}</h6>
+                </div>
+
+                <div className="d-flex flex-wrap gap-2 text-xs mb-2.5">
+                  <span className="badge bg-white text-slate-700 border font-mono px-2 py-1 rounded">
+                    📅 {modalContext?.date}
+                  </span>
+                  <span className="badge bg-white text-slate-700 border font-mono px-2 py-1 rounded">
+                    🕒 {modalContext?.timeSlot}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-top text-xs text-slate-600 d-flex justify-content-between align-items-center">
+                  <span>신청자: <strong>{studentName || "본인"}</strong> ({studentId || "학번"})</span>
+                  <span className="taste-badge taste-badge-danger">취소 대상</span>
+                </div>
               </div>
-              
-              <Form.Group className="mt-3 text-start">
-                <Form.Label className="form-label-taste text-slate-900 fw-semibold">
-                  취소 비밀번호 검증
-                </Form.Label>
+
+              {/* Warning Notice Box */}
+              <div className="p-2.5 rounded-2 bg-rose-50 border border-rose-200 text-rose-800 text-xs mb-3">
+                ⚠️ <strong>취소 안내:</strong> 예약을 취소하면 해당 시간대는 즉시 다른 학생에게 실시간으로 개방됩니다.
+              </div>
+
+              {/* Verification Password Input */}
+              <Form.Group className="text-start">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <Form.Label className="form-label-taste text-slate-900 fw-semibold mb-0 text-xs">
+                    취소 확인 비밀번호
+                  </Form.Label>
+                  {authNumber && cancelAuthPassword === authNumber && (
+                    <span className="text-emerald-600 text-xs font-medium">✓ 비밀번호 자동 입력됨</span>
+                  )}
+                </div>
                 <Form.Control
                   type="password"
-                  placeholder="예약 신청 시 설정한 비밀번호 입력"
+                  placeholder="예약 신청 시 설정했던 비밀번호 입력"
                   value={cancelAuthPassword}
                   onChange={(e) => setCancelAuthPassword(e.target.value)}
                   className="form-control-taste"
+                  autoFocus={!cancelAuthPassword}
                 />
               </Form.Group>
             </div>
           )}
         </Modal.Body>
-        <Modal.Footer className="border-top-0">
-          <Button variant="light" onClick={() => setShowReservationModal(false)} disabled={loading}>
+
+        <Modal.Footer className="border-top-0 d-flex justify-content-between">
+          <Button
+            variant="outline-secondary"
+            className="btn-taste-outline px-3"
+            onClick={() => setShowReservationModal(false)}
+            disabled={loading}
+          >
             닫기
           </Button>
+
           {modalContext?.type === "confirm" ? (
-            <Button variant="primary" className="btn-taste-primary" onClick={handleConfirmReservation} disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : "예약 확정"}
+            <Button
+              variant="primary"
+              className="btn-taste-primary px-3"
+              onClick={handleConfirmReservation}
+              disabled={loading}
+            >
+              {loading ? <Spinner animation="border" size="sm" /> : "예약 확정하기"}
             </Button>
           ) : (
-            <Button variant="danger" className="btn-taste-danger" onClick={handleConfirmCancel} disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : "예약 취소하기"}
+            <Button
+              variant="danger"
+              className="btn-taste-danger px-3"
+              onClick={handleConfirmCancel}
+              disabled={loading || !cancelAuthPassword}
+            >
+              {loading ? <Spinner animation="border" size="sm" /> : "예약 취소 확정"}
             </Button>
           )}
         </Modal.Footer>
