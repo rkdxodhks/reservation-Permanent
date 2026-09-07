@@ -707,26 +707,49 @@ body {
 }
 
 /* ========================================================
-   Taste Toast Notification System
-   Cross-platform: Mobile (Above Liquid Glass Dock), Tablet (Top-center), PC (Top-right)
+   Taste Modal System (Spacious, Minimal, Anti-Slop)
+   ======================================================== */
+.taste-modal .modal-content {
+  border-radius: 16px;
+  border: 1px solid var(--slate-200);
+  box-shadow: 0 24px 38px -6px rgba(15, 23, 42, 0.12), 0 10px 14px -4px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.taste-modal .modal-header {
+  padding: 1.5rem 1.75rem 0.75rem 1.75rem;
+}
+
+.taste-modal .modal-body {
+  padding: 0.75rem 1.75rem 1.25rem 1.75rem;
+}
+
+.taste-modal .modal-footer {
+  padding: 1rem 1.75rem 1.5rem 1.75rem;
+  background-color: #ffffff;
+  border-top: 1px solid var(--slate-100);
+}
+
+/* ========================================================
+   Taste Toast Notification System (Minimal Capsule, Anti-Slop)
    ======================================================== */
 
-/* Root Toast Container */
 .taste-toast-container {
   z-index: 9999 !important;
   font-family: var(--font-sans) !important;
 }
 
-/* 1. Base Toast Card Styling */
+/* Base Toast: Frosted Glass Floating Capsule */
 .taste-toast-container .Toastify__toast {
   background: rgba(255, 255, 255, 0.96) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
   border: 1px solid var(--slate-200) !important;
   border-radius: 12px !important;
-  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.04) !important;
-  padding: 12px 16px !important;
-  margin-bottom: 10px !important;
+  box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.04) !important;
+  padding: 12px 18px !important;
+  margin-bottom: 12px !important;
   min-height: auto !important;
   color: var(--slate-900) !important;
   cursor: pointer;
@@ -734,7 +757,7 @@ body {
 }
 
 .taste-toast-container .Toastify__toast:hover {
-  box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.16), 0 6px 8px -2px rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16), 0 6px 12px -2px rgba(15, 23, 42, 0.06) !important;
 }
 
 .taste-toast-container .Toastify__toast-body {
@@ -742,85 +765,63 @@ body {
   margin: 0 !important;
   font-size: 0.8125rem !important;
   font-weight: 500 !important;
-  line-height: 1.45 !important;
+  line-height: 1.5 !important;
   color: var(--slate-800) !important;
   display: flex !important;
   align-items: center !important;
+  gap: 10px !important;
 }
 
-/* 2. Type-specific Accents */
-.taste-toast-container .Toastify__toast--success {
-  border-left: 4px solid #10b981 !important;
-}
+/* Subtle Icon Colors (No loud left borders!) */
 .taste-toast-container .Toastify__toast--success .Toastify__toast-icon svg {
   fill: #10b981 !important;
 }
 
-.taste-toast-container .Toastify__toast--error {
-  border-left: 4px solid #e11d48 !important;
-}
 .taste-toast-container .Toastify__toast--error .Toastify__toast-icon svg {
   fill: #e11d48 !important;
 }
 
-.taste-toast-container .Toastify__toast--warning {
-  border-left: 4px solid #f59e0b !important;
-}
 .taste-toast-container .Toastify__toast--warning .Toastify__toast-icon svg {
   fill: #f59e0b !important;
 }
 
-.taste-toast-container .Toastify__toast--info {
-  border-left: 4px solid #2563eb !important;
-}
 .taste-toast-container .Toastify__toast--info .Toastify__toast-icon svg {
   fill: #2563eb !important;
 }
 
-/* 3. Progress Bar */
+/* Hide thick distracting progress bar for a clean minimal feel */
 .taste-toast-container .Toastify__progress-bar {
-  height: 2.5px !important;
-  opacity: 0.85 !important;
-}
-.taste-toast-container .Toastify__progress-bar--success {
-  background: #10b981 !important;
-}
-.taste-toast-container .Toastify__progress-bar--error {
-  background: #e11d48 !important;
-}
-.taste-toast-container .Toastify__progress-bar--warning {
-  background: #f59e0b !important;
-}
-.taste-toast-container .Toastify__progress-bar--info {
-  background: #2563eb !important;
+  display: none !important;
 }
 
-/* 4. Close Button */
+/* Subtle Close Button */
 .taste-toast-container .Toastify__close-button {
   color: var(--slate-400) !important;
-  opacity: 0.7 !important;
+  opacity: 0.6 !important;
+  margin-left: 8px !important;
   align-self: center !important;
-  transition: opacity 0.15s ease !important;
+  transition: all 0.15s ease !important;
 }
 .taste-toast-container .Toastify__close-button:hover {
   color: var(--slate-700) !important;
   opacity: 1 !important;
 }
 
-/* 5. Responsive Device Formats */
-/* Mobile (<768px): Anchored above Apple Liquid Glass Dock */
+/* Responsive Device Formats */
+/* Mobile (<768px): Sleek Pill Capsule Anchored above Floating Dock */
 @media (max-width: 767.98px) {
   .taste-toast-container.device-mobile {
-    bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(85px + env(safe-area-inset-bottom, 0px)) !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 90% !important;
-    max-width: 350px !important;
+    width: auto !important;
+    min-width: 280px !important;
+    max-width: 360px !important;
     padding: 0 !important;
   }
   .taste-toast-container.device-mobile .Toastify__toast {
-    border-radius: 14px !important;
-    padding: 10px 14px !important;
+    border-radius: 9999px !important;
+    padding: 11px 18px !important;
     margin-bottom: 8px !important;
   }
 }
@@ -828,11 +829,11 @@ body {
 /* Tablet (768px ~ 991.98px): Top-Center Below Header */
 @media (min-width: 768px) and (max-width: 991.98px) {
   .taste-toast-container.device-tablet {
-    top: 72px !important;
+    top: 76px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 90% !important;
-    max-width: 400px !important;
+    width: auto !important;
+    max-width: 420px !important;
     padding: 0 !important;
   }
 }
@@ -840,9 +841,9 @@ body {
 /* Desktop (≥992px): Top-Right with 3-Column Harmony */
 @media (min-width: 992px) {
   .taste-toast-container.device-desktop {
-    top: 76px !important;
-    right: 24px !important;
-    width: 350px !important;
+    top: 80px !important;
+    right: 28px !important;
+    width: 360px !important;
   }
 }
 
