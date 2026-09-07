@@ -81,9 +81,15 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-  const [isMobileView, setIsMobileView] = useState(
-    typeof window !== "undefined" ? window.innerWidth < 768 : false
-  );
+  const getDeviceMode = () => {
+    if (typeof window === "undefined") return "desktop";
+    const width = window.innerWidth;
+    if (width < 768) return "mobile";
+    if (width < 992) return "tablet";
+    return "desktop";
+  };
+
+  const [deviceMode, setDeviceMode] = useState(getDeviceMode);
 
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -96,7 +102,7 @@ function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768);
+      setDeviceMode(getDeviceMode());
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -361,9 +367,18 @@ function App() {
     <div className="app-main-wrapper bg-slate min-vh-100 d-flex flex-column">
       <ToastContainer
         transition={Slide}
-        position={isMobileView ? "bottom-center" : "top-right"}
-        autoClose={2800}
-        style={{ marginBottom: isMobileView ? "85px" : "0px" }}
+        position={
+          deviceMode === "mobile"
+            ? "bottom-center"
+            : deviceMode === "tablet"
+            ? "top-center"
+            : "top-right"
+        }
+        autoClose={2600}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        className={`taste-toast-container device-${deviceMode}`}
       />
 
       {/* HEADER BAR */}
