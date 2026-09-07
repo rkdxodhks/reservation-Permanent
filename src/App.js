@@ -307,15 +307,32 @@ function App() {
     setLoading(true);
 
     try {
-      // Guard: Check if slot is blocked by admin
-      const isSlotBlocked = slotBlocks.some(
+      // Guard 1: Check in-memory slotBlocks
+      const isSlotBlockedMemory = slotBlocks.some(
         (b) =>
           b.booth_id === modalContext.lab &&
           b.date === modalContext.date &&
           b.time_slot === modalContext.timeSlot
       );
-      if (isSlotBlocked) {
+      if (isSlotBlockedMemory) {
         toast.error("해당 시간대는 관리자에 의해 예약이 차단되어 있습니다.");
+        setLoading(false);
+        setShowReservationModal(false);
+        return;
+      }
+
+      // Guard 2: Live Supabase DB check to prevent race conditions or stale client states
+      const { data: liveBlockCheck } = await supabase
+        .from("slot_blocks")
+        .select("id")
+        .eq("booth_id", modalContext.lab)
+        .eq("date", modalContext.date)
+        .eq("time_slot", modalContext.timeSlot)
+        .maybeSingle();
+
+      if (liveBlockCheck) {
+        toast.error("해당 시간대는 관리자에 의해 예약이 차단되어 있습니다.");
+        fetchReservationsAndBlocks();
         setLoading(false);
         setShowReservationModal(false);
         return;

@@ -142,16 +142,29 @@ export const AdminModal = ({
 
   useEffect(() => {
     setBoothList(booths);
-    if (booths.length > 0 && !selectedBlockBooth) {
+    if (booths.length > 0 && (!selectedBlockBooth || !booths.some((b) => b.name === selectedBlockBooth))) {
       setSelectedBlockBooth(booths[0].name);
     }
   }, [booths, selectedBlockBooth]);
 
   useEffect(() => {
-    if (settings?.event_dates?.length > 0 && !selectedBlockDate) {
-      setSelectedBlockDate(settings.event_dates[0]);
+    const validDates = settings?.event_dates || [];
+    if (validDates.length > 0 && (!selectedBlockDate || !validDates.includes(selectedBlockDate))) {
+      setSelectedBlockDate(validDates[0]);
     }
-  }, [settings, selectedBlockDate]);
+  }, [settings?.event_dates, selectedBlockDate]);
+
+  useEffect(() => {
+    if (show) {
+      const validDates = settings?.event_dates || [];
+      if (validDates.length > 0 && (!selectedBlockDate || !validDates.includes(selectedBlockDate))) {
+        setSelectedBlockDate(validDates[0]);
+      }
+      if (booths.length > 0 && (!selectedBlockBooth || !booths.some((b) => b.name === selectedBlockBooth))) {
+        setSelectedBlockBooth(booths[0].name);
+      }
+    }
+  }, [show, settings, booths, selectedBlockDate, selectedBlockBooth]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -267,8 +280,16 @@ export const AdminModal = ({
   };
 
   const handleToggleSlotBlock = async (timeSlot) => {
+    const targetBooth = selectedBlockBooth || booths[0]?.name;
+    const targetDate = selectedBlockDate || settings?.event_dates?.[0];
+
+    if (!targetBooth || !targetDate) {
+      toast.error("부스와 행사 날짜를 먼저 선택해 주세요.");
+      return;
+    }
+
     const isBlocked = slotBlocks.some(
-      (b) => b.booth_id === selectedBlockBooth && b.date === selectedBlockDate && b.time_slot === timeSlot
+      (b) => b.booth_id === targetBooth && b.date === targetDate && b.time_slot === timeSlot
     );
 
     try {
@@ -276,25 +297,70 @@ export const AdminModal = ({
         const { error } = await supabase
           .from("slot_blocks")
           .delete()
-          .match({ booth_id: selectedBlockBooth, date: selectedBlockDate, time_slot: timeSlot });
+          .match({ booth_id: targetBooth, date: targetDate, time_slot: timeSlot });
         if (error) throw error;
-        toast.info(`${timeSlot} 슬롯 예약 가능 상태로 변경`);
+        toast.info(`${timeSlot} 슬롯 예약 가능 상태로 변경 (${targetDate})`);
       } else {
         const { error } = await supabase.from("slot_blocks").insert([
           {
-            booth_id: selectedBlockBooth,
-            date: selectedBlockDate,
+            booth_id: targetBooth,
+            date: targetDate,
             time_slot: timeSlot,
             reason: "관리자 차단",
           },
         ]);
         if (error) throw error;
-        toast.warn(`${timeSlot} 슬롯 예약 차단 완료`);
+        toast.warn(`${timeSlot} 슬롯 예약 차단 완료 (${targetDate})`);
       }
       onRefreshData();
     } catch (err) {
       console.error("Toggle block error:", err);
       toast.error(`변경 실패: ${err.message}`);
+    }
+  };
+
+  const handleCopyBlocksToAllDates = async () => {
+    const targetBooth = selectedBlockBooth || booths[0]?.name;
+    const targetDate = selectedBlockDate || settings?.event_dates?.[0];
+    const allDates = settings?.event_dates || [];
+
+    if (!targetBooth || !targetDate || allDates.length <= 1) {
+      toast.info("적용할 다른 행사 날짜가 없습니다.");
+      return;
+    }
+
+    const currentBlocks = slotBlocks.filter(
+      (b) => b.booth_id === targetBooth && b.date === targetDate
+    );
+
+    if (currentBlocks.length === 0) {
+      toast.info(`현재 날짜(${targetDate})에 차단된 슬롯이 없습니다.`);
+      return;
+    }
+
+    try {
+      const otherDates = allDates.filter((d) => d !== targetDate);
+      const newBlocks = [];
+      for (const d of otherDates) {
+        for (const cb of currentBlocks) {
+          newBlocks.push({
+            booth_id: targetBooth,
+            date: d,
+            time_slot: cb.time_slot,
+            reason: cb.reason || "관리자 차단",
+          });
+        }
+      }
+
+      const { error } = await supabase.from("slot_blocks").upsert(newBlocks, {
+        onConflict: "booth_id,date,time_slot",
+      });
+      if (error) throw error;
+      toast.success(`${currentBlocks.length}개 슬롯 설정을 다른 모든 행사 날짜에 복사했습니다.`);
+      onRefreshData();
+    } catch (err) {
+      console.error("Copy blocks error:", err);
+      toast.error(`복사 실패: ${err.message}`);
     }
   };
 
@@ -712,16 +778,36 @@ export const AdminModal = ({
                   </div>
                 </div>
 
+                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+                  <div className="text-xs text-slate-600">
+                    <strong className="text-slate-900">{selectedBlockBooth || booths[0]?.name}</strong> 부스 (
+                    <span className="font-mono text-blue-600 fw-semibold">{selectedBlockDate || settings?.event_dates?.[0]}</span> 기준 차단 설정)
+                  </div>
+                  {settings?.event_dates?.length > 1 && (
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      className="btn-taste-outline text-xs"
+                      onClick={handleCopyBlocksToAllDates}
+                    >
+                      모든 행사 날짜에 동일 차단 복사
+                    </Button>
+                  )}
+                </div>
+
                 <div className="d-flex flex-wrap gap-2">
                   {generateTimeSlots(
                     formSettings.start_time || "10:00",
                     formSettings.end_time || "16:00",
                     formSettings.slot_interval || 20
                   ).map((slot) => {
+                    const targetBooth = selectedBlockBooth || booths[0]?.name;
+                    const targetDate = selectedBlockDate || settings?.event_dates?.[0];
+
                     const isBlocked = slotBlocks.some(
                       (b) =>
-                        b.booth_id === selectedBlockBooth &&
-                        b.date === selectedBlockDate &&
+                        b.booth_id === targetBooth &&
+                        b.date === targetDate &&
                         b.time_slot === slot
                     );
 

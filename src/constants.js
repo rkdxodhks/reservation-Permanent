@@ -1,6 +1,6 @@
 export const DEFAULT_SETTINGS = {
   event_title: "부산대학교 바이오소재과학과 BAF 체험부스 실시간 예약 시스템",
-  event_dates: ["2026-09-10", "2026-09-11"],
+  event_dates: ["2026-11-04"],
   max_reservations_per_student: 2,
   max_capacity_per_slot: 1, // 체험부스 슬롯당 1명으로 변경
   start_time: "10:00",
