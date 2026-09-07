@@ -1,7 +1,22 @@
 import React from "react";
 
+const ClockIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
+const CalendarSmallIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
 export const LabsList = ({ booths = [], selectedLab, onLabSelect }) => {
-  // Deduplicate booths by name to ensure no duplicate buttons appear in UI
   const uniqueBooths = (booths || []).filter(
     (booth, index, self) =>
       index === self.findIndex((b) => b.name === booth.name)
@@ -9,7 +24,7 @@ export const LabsList = ({ booths = [], selectedLab, onLabSelect }) => {
 
   return (
     <div className="booth-selection-panel">
-      <h6 className="fw-semibold mb-3 text-slate-900">
+      <h6 className="fw-semibold mb-3 text-slate-900 fs-7 text-uppercase" style={{ letterSpacing: "0.04em" }}>
         체험 부스 선택
       </h6>
       <div className="booth-pill-container d-flex flex-wrap gap-2">
@@ -47,7 +62,6 @@ export const MyReservations = ({
   maxReservationsPerStudent = 2,
   onReservationClick,
 }) => {
-  // Show ALL reservations for this student across all dates, sorted by date and time
   const myReservations = studentId
     ? reservations
         .filter((r) => r.student_id === studentId)
@@ -60,7 +74,6 @@ export const MyReservations = ({
   const maxCount = Number(maxReservationsPerStudent) || 2;
   const isAtLimit = currentReservationCount >= maxCount;
 
-  // Group by date
   const groupedReservations = myReservations.reduce((acc, res) => {
     if (!acc[res.date]) acc[res.date] = [];
     acc[res.date].push(res);
@@ -70,23 +83,23 @@ export const MyReservations = ({
   return (
     <div className="taste-card p-4 mt-3">
       <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-        <h6 className="fw-semibold mb-0 text-slate-900 d-flex align-items-center gap-2">
-          <span>나의 예약 현황</span>
+        <h6 className="fw-semibold mb-0 text-slate-900 fs-7 text-uppercase" style={{ letterSpacing: "0.04em" }}>
+          나의 예약 현황
         </h6>
         {studentId && (
           <span
-            className={`taste-badge ${isAtLimit ? "taste-badge-danger" : "taste-badge-primary"}`}
-            style={{ fontWeight: 600, fontSize: "0.75rem" }}
+            className={`taste-badge ${isAtLimit ? "taste-badge-danger" : "taste-badge-neutral"}`}
+            style={{ fontWeight: 600, fontSize: "0.6875rem" }}
           >
-            {currentReservationCount} / {maxCount} 회
+            {currentReservationCount} / {maxCount}
           </span>
         )}
       </div>
 
       {!studentId ? (
-        <div className="text-center py-4 text-slate-500 bg-slate-50 rounded-3 border border-dashed">
-          <small className="d-block mb-1 font-medium text-slate-700">등록된 학번이 없습니다.</small>
-          <small className="text-slate-500 text-xs">학번을 입력하면 신청한 예약 내역이 표시됩니다.</small>
+        <div className="text-center py-4 bg-slate-50 rounded-2 border border-dashed">
+          <p className="mb-1 text-xs text-slate-700 fw-medium">등록된 학번이 없습니다.</p>
+          <span className="text-slate-400 text-xs">학번을 입력하면 신청 내역이 표시됩니다.</span>
         </div>
       ) : (
         <>
@@ -94,8 +107,8 @@ export const MyReservations = ({
             <div className="d-flex flex-column gap-3">
               {Object.entries(groupedReservations).map(([date, resList]) => (
                 <div key={date}>
-                  <div className="text-xs fw-semibold text-slate-600 mb-2 px-1 d-flex align-items-center gap-1.5">
-                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#3b82f6" }} />
+                  <div className="text-xs fw-semibold text-slate-500 mb-1.5 px-1 d-flex align-items-center gap-1.5 font-mono">
+                    <CalendarSmallIcon />
                     <span>{date}</span>
                   </div>
                   <div className="d-flex flex-column gap-2">
@@ -106,38 +119,35 @@ export const MyReservations = ({
                       return (
                         <div
                           key={reservation.id}
-                          className="reservation-ticket-card d-flex justify-content-between align-items-center"
+                          className="reservation-item-row p-2.5 border rounded-2 d-flex justify-content-between align-items-center bg-white"
                           onClick={() => onReservationClick(reservation)}
-                          style={{ cursor: "pointer", borderLeft: `3px solid ${boothColor}` }}
-                          title="클릭하여 예약 상세 확인 및 취소"
+                          style={{ cursor: "pointer", transition: "all 0.15s ease" }}
                         >
                           <div className="overflow-hidden me-2">
                             <div className="d-flex align-items-center gap-1.5 mb-1">
                               <span
                                 style={{
-                                  width: "7px",
-                                  height: "7px",
+                                  width: "6px",
+                                  height: "6px",
                                   borderRadius: "50%",
                                   backgroundColor: boothColor,
                                   flexShrink: 0,
                                 }}
                               />
-                              <span className="fw-semibold text-slate-900 text-truncate text-sm">
+                              <span className="fw-medium text-slate-900 text-truncate text-sm">
                                 {reservation.booth_id}
                               </span>
                             </div>
-                            <div className="d-flex align-items-center gap-2">
-                              <span className="badge bg-slate-100 text-slate-700 font-mono text-xs px-2 py-0.5 rounded">
-                                {reservation.time_slot}
-                              </span>
-                              <span className="text-slate-500 text-xs">
-                                본인 신청
+                            <div className="d-flex align-items-center gap-2 text-xs text-slate-500 font-mono">
+                              <span className="d-flex align-items-center gap-1">
+                                <ClockIcon />
+                                <span>{reservation.time_slot}</span>
                               </span>
                             </div>
                           </div>
                           <button
                             type="button"
-                            className="btn btn-taste-outline-danger btn-sm shrink-0 px-2.5 py-1 text-xs"
+                            className="btn btn-taste-outline-danger shrink-0 px-2 py-1 text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
                               onReservationClick(reservation);
@@ -152,14 +162,14 @@ export const MyReservations = ({
                 </div>
               ))}
 
-              <div className="bg-blue-50 p-2.5 rounded-2 border border-blue-100 text-center mt-1">
-                <small className="text-slate-700 text-xs">
-                  💡 행사 당일 부스 입장 시 위 예약 내역을 제시해 주세요.
-                </small>
+              <div className="pt-2 border-top">
+                <span className="text-slate-400 text-xs d-block text-center" style={{ fontSize: "0.6875rem" }}>
+                  행사 당일 부스 입장 시 위 예약 내역을 확인합니다.
+                </span>
               </div>
             </div>
           ) : (
-            <div className="text-center py-4 text-slate-500 bg-slate-50 rounded-3 text-sm border border-dashed">
+            <div className="text-center py-4 bg-slate-50 rounded-2 text-xs text-slate-500 border border-dashed">
               신청한 예약 내역이 없습니다.
             </div>
           )}
