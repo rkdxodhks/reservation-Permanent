@@ -1,61 +1,75 @@
-name: Supabase Keep Alive
+name: Ping Supabase (Keep Alive)
 
-# Automatically ping Supabase every 3 days so the free-tier database never pauses due to inactivity
+# Automatically ping Supabase daily to keep the free-tier database awake and prevent pause
 on:
   schedule:
-    # Runs every 3 days at 00:00 UTC (9:00 AM KST)
-    - cron: '0 0 */3 * *'
+    # Runs daily at 09:00 UTC (18:00 KST)
+    - cron: '0 9 * * *'
   workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
 
 jobs:
   keep_alive:
+    name: Ping Supabase Services
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase Keep-Alive Endpoints
+      - name: Ping Supabase Multi-Tier Endpoints
         env:
-          # Prefer repository secret if configured, fallback to project anon key
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdGZvd2Rrd2pha2FmYWhib3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMzE5OTEsImV4cCI6MjEwMzkwNzk5MX0.YIM-0am4ijLZq2n5dEraIN_ZR_wchpwHdhy33fOHvFk' }}
-          SUPABASE_URL: "https://bptfowdkwjakafahbopy.supabase.co"
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.REACT_APP_SUPABASE_URL || 'https://bptfowdkwjakafahbopy.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdGZvd2Rrd2pha2FmYWhib3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMzE5OTEsImV4cCI6MjEwMzkwNzk5MX0.YIM-0am4ijLZq2n5dEraIN_ZR_wchpwHdhy33fOHvFk' }}
         run: |
           echo "=========================================="
           echo "🚀 Starting Supabase Keep-Alive Health Ping"
           echo "Target Project: $SUPABASE_URL"
+          echo "Execution Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "=========================================="
 
           SUCCESS=false
 
-          # 1. Primary Check: PostgREST app_settings table
-          echo "Checking PostgREST table endpoint..."
-          HTTP_STATUS_REST=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 --retry 2 \
+          # 1. Primary Check: PostgREST app_settings table query (wakes PostgreSQL engine)
+          echo "1️⃣ Checking PostgREST app_settings table endpoint..."
+          HTTP_STATUS_APP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 --retry 2 \
             -X GET "$SUPABASE_URL/rest/v1/app_settings?select=id" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-          echo "REST API Status Code: $HTTP_STATUS_REST"
+          echo "   -> HTTP Status: $HTTP_STATUS_APP"
 
-          if [ "$HTTP_STATUS_REST" -ge 200 ] && [ "$HTTP_STATUS_REST" -lt 400 ]; then
-            echo "✅ Primary check passed! Database is active and responsive."
+          if [ "$HTTP_STATUS_APP" -ge 200 ] && [ "$HTTP_STATUS_APP" -lt 400 ]; then
+            echo "   ✅ Primary check passed! PostgreSQL database is active and responsive."
             SUCCESS=true
           else
-            echo "⚠️ Primary check returned: $HTTP_STATUS_REST (Possible key rotation or cold start)"
+            echo "   ⚠️ Primary check returned $HTTP_STATUS_APP, trying secondary checks..."
           fi
 
-          # 2. Secondary Fallback Check: GoTrue Auth Health endpoint
-          echo "Checking Auth Health endpoint..."
+          # 2. Secondary Check: PostgREST booths table query
+          echo "2️⃣ Checking PostgREST booths table endpoint..."
+          HTTP_STATUS_BOOTHS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 --retry 2 \
+            -X GET "$SUPABASE_URL/rest/v1/booths?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "   -> HTTP Status: $HTTP_STATUS_BOOTHS"
+
+          if [ "$HTTP_STATUS_BOOTHS" -ge 200 ] && [ "$HTTP_STATUS_BOOTHS" -lt 400 ]; then
+            echo "   ✅ Secondary check passed! Table query succeeded."
+            SUCCESS=true
+          fi
+
+          # 3. Tertiary Fallback Check: GoTrue Auth Health endpoint
+          echo "3️⃣ Checking GoTrue Auth Service health endpoint..."
           HTTP_STATUS_AUTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 --retry 2 \
             -X GET "$SUPABASE_URL/auth/v1/health?apikey=$SUPABASE_ANON_KEY")
-          echo "Auth API Status Code: $HTTP_STATUS_AUTH"
+          echo "   -> HTTP Status: $HTTP_STATUS_AUTH"
 
           if [ "$HTTP_STATUS_AUTH" -ge 200 ] && [ "$HTTP_STATUS_AUTH" -lt 400 ]; then
-            echo "✅ Auth health check passed! Service container is awake."
+            echo "   ✅ Auth service health check passed! Container is awake."
             SUCCESS=true
           fi
 
           echo "=========================================="
           if [ "$SUCCESS" = true ]; then
-            echo "🎉 Supabase project is active and refreshed! (Keep-alive successful)"
+            echo "🎉 Supabase project is awake and refreshed! (Keep-alive successful)"
             exit 0
           else
-            echo "❌ Both checks returned unexpected statuses (REST: $HTTP_STATUS_REST, AUTH: $HTTP_STATUS_AUTH)."
-            echo "👉 If you recently rotated API keys in Supabase, please update 'SUPABASE_ANON_KEY' in GitHub Repository Secrets."
+            echo "❌ All checks failed (app_settings: $HTTP_STATUS_APP, booths: $HTTP_STATUS_BOOTHS, auth: $HTTP_STATUS_AUTH)."
+            echo "👉 If you recently rotated API keys in Supabase, please verify 'SUPABASE_ANON_KEY' or 'REACT_APP_SUPABASE_ANON_KEY' in GitHub Repository Secrets."
             exit 1
           fi
